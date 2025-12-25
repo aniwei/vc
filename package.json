@@ -323,6 +323,21 @@
       "require": "./dist/cjs/webassembly/runtime/asm/thread.js",
       "types": "./dist/esm/webassembly/runtime/asm/thread.d.ts"
     },
+    "./canvaskit": {
+      "import": "./dist/esm/canvaskit/index.js",
+      "require": "./dist/cjs/canvaskit/index.js",
+      "types": "./dist/esm/canvaskit/index.d.ts"
+    },
+    "./canvaskit/CanvasKitRunner": {
+      "import": "./dist/esm/canvaskit/CanvasKitRunner.js",
+      "require": "./dist/cjs/canvaskit/CanvasKitRunner.js",
+      "types": "./dist/esm/canvaskit/CanvasKitRunner.d.ts"
+    },
+    "./canvaskit/types": {
+      "import": "./dist/esm/canvaskit/types.js",
+      "require": "./dist/cjs/canvaskit/types.js",
+      "types": "./dist/esm/canvaskit/types.d.ts"
+    },
     "./build/webpack/CheapPlugin": "./build/webpack/plugin/CheapPlugin.js",
     "./build/transformer": "./build/transformer.js",
     "./build/wasm-opt": "./build/wasm-opt.js"
