@@ -9,6 +9,7 @@
 // WebGL context storage
 const contexts: Map<number, WebGLRenderingContext | WebGL2RenderingContext> = new Map()
 let nextContextHandle = 1
+let currentContextHandle = 0
 
 /**
  * Create a WebGL context for the given canvas
@@ -17,10 +18,10 @@ export function emscripten_webgl_create_context(
   canvasSelector: number,
   attributes: number
 ): number {
-  // For CanvasKit, we'll typically pass the canvas element directly
-  // In the actual implementation, this would be called from C++ side
-  // We return a context handle that maps to the WebGL context
-  return 0 // Will be set up properly when surface is created
+  // Allocate a new context handle
+  const handle = nextContextHandle++
+  // The actual context will be set when registerContext is called
+  return handle
 }
 
 /**
@@ -29,6 +30,7 @@ export function emscripten_webgl_create_context(
 export function emscripten_webgl_make_context_current(contextHandle: number): number {
   const context = contexts.get(contextHandle)
   if (context) {
+    currentContextHandle = contextHandle
     return 0 // Success
   }
   return -1 // Error
@@ -38,12 +40,15 @@ export function emscripten_webgl_make_context_current(contextHandle: number): nu
  * Get the current WebGL context
  */
 export function getCurrentContext(): WebGLRenderingContext | WebGL2RenderingContext | null {
-  // Return the most recently created context
-  // In a real implementation, track the "current" context
-  for (const ctx of contexts.values()) {
-    return ctx
+  if (currentContextHandle === 0) {
+    // If no current context, try to use the first available
+    for (const [handle, ctx] of contexts.entries()) {
+      currentContextHandle = handle
+      return ctx
+    }
+    return null
   }
-  return null
+  return contexts.get(currentContextHandle) || null
 }
 
 /**
@@ -116,8 +121,12 @@ export function createWebGLImports() {
     
     glBindTexture: (target: number, texture: number) => {
       const ctx = getCurrentContext()
-      // Texture handling would need proper WebGLTexture object mapping
-      if (ctx) ctx.bindTexture(target, null)
+      if (ctx) {
+        // TODO: Implement proper texture handle to WebGLTexture mapping
+        // For now, we pass null which unbinds any texture
+        // A complete implementation would maintain a Map<number, WebGLTexture>
+        ctx.bindTexture(target, null)
+      }
     },
     
     // Add more GL functions as needed by CanvasKit

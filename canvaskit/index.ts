@@ -81,9 +81,14 @@ function ColorAsInt(r: number, g: number, b: number, a: number = 255): ColorInt 
  */
 export const CanvasKitInit: ICanvasKitInit = async (options: CanvasKitInitOptions = {}): Promise<CanvasKitAPI> => {
   
+  // Validate that at least one source is provided
+  if (!options.wasmUrl && !options.wasmBinary) {
+    throw new Error('Either wasmUrl or wasmBinary must be provided')
+  }
+  
   // Compile the WebAssembly module
   const resource = await compile({
-    source: options.wasmUrl || options.wasmBinary
+    source: options.wasmUrl || options.wasmBinary!
   })
   
   // Create the runner

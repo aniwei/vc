@@ -6,9 +6,16 @@ This document describes how to compile Skia CanvasKit to work with the `@aniwei/
 
 1. Clone the Skia repository with CanvasKit:
 ```bash
+# Clone the official Skia repository or the aniwei fork
+# Official: https://github.com/google/skia.git
+# Fork with potential custom changes: https://github.com/aniwei/skia.git
 git clone https://github.com/aniwei/skia.git
 cd skia
 ```
+
+Note: This build script is designed for the aniwei/skia fork which may include
+custom modifications for cheap integration. If using the official Google Skia
+repository, you may need to adjust the build configuration.
 
 2. Install Emscripten SDK (version should match the one used by Skia)
 ```bash
