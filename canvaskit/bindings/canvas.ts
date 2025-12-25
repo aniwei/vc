@@ -11,13 +11,13 @@ import { Path } from './path'
 
 export class Canvas implements ICanvas {
   private runner: CanvasKitRunner
-  private pointer: pointer<void>
+  private pointer: number
   
-  constructor(runner: CanvasKitRunner, pointer: pointer<void>) {
+  constructor(runner: CanvasKitRunner, pointer: number) {
     this.runner = runner
     this.pointer = pointer
     
-    if (this.pointer === nullptr) {
+    if (this.pointer === 0) {
       throw new Error('Invalid canvas pointer')
     }
   }
@@ -63,7 +63,7 @@ export class Canvas implements ICanvas {
    * Draw a circle
    * Calls C function: void Canvas_drawCircle(void* canvas, float cx, float cy, float radius, void* paint)
    */
-  drawCircle(cx: float, cy: float, radius: float, paint: Paint): void {
+  drawCircle(cx: number, cy: number, radius: number, paint: Paint): void {
     this.runner.invokeCanvasKit(
       'Canvas_drawCircle',
       this.pointer,
@@ -78,8 +78,8 @@ export class Canvas implements ICanvas {
    * Save the canvas state
    * Calls C function: int Canvas_save(void* canvas)
    */
-  save(): int32 {
-    return this.runner.invokeCanvasKit<int32>('Canvas_save', this.pointer)
+  save(): number {
+    return this.runner.invokeCanvasKit<number>('Canvas_save', this.pointer)
   }
   
   /**
@@ -94,7 +94,7 @@ export class Canvas implements ICanvas {
    * Translate the canvas
    * Calls C function: void Canvas_translate(void* canvas, float dx, float dy)
    */
-  translate(dx: float, dy: float): void {
+  translate(dx: number, dy: number): void {
     this.runner.invokeCanvasKit('Canvas_translate', this.pointer, dx, dy)
   }
   
@@ -102,7 +102,7 @@ export class Canvas implements ICanvas {
    * Scale the canvas
    * Calls C function: void Canvas_scale(void* canvas, float sx, float sy)
    */
-  scale(sx: float, sy: float): void {
+  scale(sx: number, sy: number): void {
     this.runner.invokeCanvasKit('Canvas_scale', this.pointer, sx, sy)
   }
   
@@ -110,14 +110,14 @@ export class Canvas implements ICanvas {
    * Rotate the canvas
    * Calls C function: void Canvas_rotate(void* canvas, float degrees)
    */
-  rotate(degrees: float): void {
+  rotate(degrees: number): void {
     this.runner.invokeCanvasKit('Canvas_rotate', this.pointer, degrees)
   }
   
   /**
    * Get the native pointer (for internal use)
    */
-  getPointer(): pointer<void> {
+  getPointer(): number {
     return this.pointer
   }
 }

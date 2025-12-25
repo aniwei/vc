@@ -57,7 +57,7 @@ const TRANSPARENT: ColorInt = 0x00000000
  * @param b Blue component (0-255)
  * @param a Alpha component (0.0-1.0), default 1.0
  */
-function Color(r: uint8, g: uint8, b: uint8, a: float = 1.0): ColorInt {
+function Color(r: number, g: number, b: number, a: number = 1.0): ColorInt {
   const alpha = Math.round(a * 255) & 0xFF
   return ((alpha << 24) | (r << 16) | (g << 8) | b) >>> 0
 }
@@ -69,7 +69,7 @@ function Color(r: uint8, g: uint8, b: uint8, a: float = 1.0): ColorInt {
  * @param b Blue component (0-255)
  * @param a Alpha component (0-255), default 255
  */
-function ColorAsInt(r: uint8, g: uint8, b: uint8, a: uint8 = 255): ColorInt {
+function ColorAsInt(r: number, g: number, b: number, a: number = 255): ColorInt {
   return ((a << 24) | (r << 16) | (g << 8) | b) >>> 0
 }
 
@@ -103,13 +103,13 @@ export const CanvasKitInit: ICanvasKitInit = async (options: CanvasKitInitOption
       runner.setCanvas(canvas)
       
       // Call C function: void* MakeCanvasSurface(int width, int height)
-      const surfacePointer = runner.invokeCanvasKit<pointer<void>>(
+      const surfacePointer = runner.invokeCanvasKit<number>(
         'MakeCanvasSurface',
         canvas.width,
         canvas.height
       )
       
-      if (surfacePointer === nullptr) {
+      if (surfacePointer === 0) {
         return null
       }
       
@@ -120,13 +120,13 @@ export const CanvasKitInit: ICanvasKitInit = async (options: CanvasKitInitOption
       runner.setCanvas(canvas)
       
       // Call C function: void* MakeSWCanvasSurface(int width, int height)
-      const surfacePointer = runner.invokeCanvasKit<pointer<void>>(
+      const surfacePointer = runner.invokeCanvasKit<number>(
         'MakeSWCanvasSurface',
         canvas.width,
         canvas.height
       )
       
-      if (surfacePointer === nullptr) {
+      if (surfacePointer === 0) {
         return null
       }
       

@@ -9,14 +9,14 @@ import type { Paint as IPaint, ColorInt, PaintStyle } from '../types'
 
 export class Paint implements IPaint {
   private runner: CanvasKitRunner
-  private pointer: pointer<void>
+  private pointer: number
   
   constructor(runner: CanvasKitRunner) {
     this.runner = runner
     // Call C function: void* MakePaint()
-    this.pointer = this.runner.invokeCanvasKit<pointer<void>>('MakePaint')
+    this.pointer = this.runner.invokeCanvasKit<number>('MakePaint')
     
-    if (this.pointer === nullptr) {
+    if (this.pointer === 0) {
       throw new Error('Failed to create Paint object')
     }
   }
@@ -49,7 +49,7 @@ export class Paint implements IPaint {
    * Set stroke width
    * Calls C function: void Paint_setStrokeWidth(void* paint, float width)
    */
-  setStrokeWidth(width: float): void {
+  setStrokeWidth(width: number): void {
     this.runner.invokeCanvasKit('Paint_setStrokeWidth', this.pointer, width)
   }
   
@@ -58,16 +58,16 @@ export class Paint implements IPaint {
    * Calls C function: void DeletePaint(void* paint)
    */
   delete(): void {
-    if (this.pointer !== nullptr) {
+    if (this.pointer !== 0) {
       this.runner.invokeCanvasKit('DeletePaint', this.pointer)
-      this.pointer = nullptr
+      this.pointer = 0
     }
   }
   
   /**
    * Get the native pointer (for internal use)
    */
-  getPointer(): pointer<void> {
+  getPointer(): number {
     return this.pointer
   }
 }

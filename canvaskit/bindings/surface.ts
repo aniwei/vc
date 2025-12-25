@@ -10,15 +10,15 @@ import { Canvas } from './canvas'
 
 export class Surface implements ISurface {
   private runner: CanvasKitRunner
-  private pointer: pointer<void>
+  private pointer: number
   private canvas: Canvas | null
   
-  constructor(runner: CanvasKitRunner, pointer: pointer<void>) {
+  constructor(runner: CanvasKitRunner, pointer: number) {
     this.runner = runner
     this.pointer = pointer
     this.canvas = null
     
-    if (this.pointer === nullptr) {
+    if (this.pointer === 0) {
       throw new Error('Invalid surface pointer')
     }
   }
@@ -29,7 +29,7 @@ export class Surface implements ISurface {
    */
   getCanvas(): Canvas {
     if (!this.canvas) {
-      const canvasPointer = this.runner.invokeCanvasKit<pointer<void>>(
+      const canvasPointer = this.runner.invokeCanvasKit<number>(
         'Surface_getCanvas',
         this.pointer
       )
@@ -51,9 +51,9 @@ export class Surface implements ISurface {
    * Calls C function: void DeleteSurface(void* surface)
    */
   delete(): void {
-    if (this.pointer !== nullptr) {
+    if (this.pointer !== 0) {
       this.runner.invokeCanvasKit('DeleteSurface', this.pointer)
-      this.pointer = nullptr
+      this.pointer = 0
       this.canvas = null
     }
   }
@@ -61,7 +61,7 @@ export class Surface implements ISurface {
   /**
    * Get the native pointer (for internal use)
    */
-  getPointer(): pointer<void> {
+  getPointer(): number {
     return this.pointer
   }
 }

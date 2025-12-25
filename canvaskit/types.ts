@@ -6,31 +6,31 @@
  */
 
 export interface Rect {
-  left: float
-  top: float
-  right: float
-  bottom: float
+  left: number
+  top: number
+  right: number
+  bottom: number
 }
 
 export interface Color {
-  r: float
-  g: float
-  b: float
-  a: float
+  r: number
+  g: number
+  b: number
+  a: number
 }
 
-export type ColorInt = uint32
+export type ColorInt = number
 
 export interface Point {
-  x: float
-  y: float
+  x: number
+  y: number
 }
 
 export interface Paint {
   setColor(color: ColorInt): void
   setAntiAlias(aa: boolean): void
   setStyle(style: PaintStyle): void
-  setStrokeWidth(width: float): void
+  setStrokeWidth(width: number): void
   delete(): void
 }
 
@@ -40,8 +40,8 @@ export enum PaintStyle {
 }
 
 export interface Path {
-  moveTo(x: float, y: float): void
-  lineTo(x: float, y: float): void
+  moveTo(x: number, y: number): void
+  lineTo(x: number, y: number): void
   close(): void
   reset(): void
   delete(): void
@@ -51,12 +51,12 @@ export interface Canvas {
   clear(color: ColorInt): void
   drawRect(rect: Rect, paint: Paint): void
   drawPath(path: Path, paint: Paint): void
-  drawCircle(cx: float, cy: float, radius: float, paint: Paint): void
-  save(): int32
+  drawCircle(cx: number, cy: number, radius: number, paint: Paint): void
+  save(): number
   restore(): void
-  translate(dx: float, dy: float): void
-  scale(sx: float, sy: float): void
-  rotate(degrees: float): void
+  translate(dx: number, dy: number): void
+  scale(sx: number, sy: number): void
+  rotate(degrees: number): void
 }
 
 export interface Surface {
@@ -92,8 +92,8 @@ export interface CanvasKitAPI {
   PaintStyle: typeof PaintStyle
   
   // Utility functions
-  Color(r: uint8, g: uint8, b: uint8, a?: float): ColorInt
-  ColorAsInt(r: uint8, g: uint8, b: uint8, a?: uint8): ColorInt
+  Color(r: number, g: number, b: number, a?: number): ColorInt
+  ColorAsInt(r: number, g: number, b: number, a?: number): ColorInt
 }
 
 export type CanvasKitInit = (options?: CanvasKitInitOptions) => Promise<CanvasKitAPI>

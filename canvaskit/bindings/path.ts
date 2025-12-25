@@ -9,14 +9,14 @@ import type { Path as IPath } from '../types'
 
 export class Path implements IPath {
   private runner: CanvasKitRunner
-  private pointer: pointer<void>
+  private pointer: number
   
   constructor(runner: CanvasKitRunner) {
     this.runner = runner
     // Call C function: void* MakePath()
-    this.pointer = this.runner.invokeCanvasKit<pointer<void>>('MakePath')
+    this.pointer = this.runner.invokeCanvasKit<number>('MakePath')
     
-    if (this.pointer === nullptr) {
+    if (this.pointer === 0) {
       throw new Error('Failed to create Path object')
     }
   }
@@ -25,7 +25,7 @@ export class Path implements IPath {
    * Move to a point
    * Calls C function: void Path_moveTo(void* path, float x, float y)
    */
-  moveTo(x: float, y: float): void {
+  moveTo(x: number, y: number): void {
     this.runner.invokeCanvasKit('Path_moveTo', this.pointer, x, y)
   }
   
@@ -33,7 +33,7 @@ export class Path implements IPath {
    * Draw a line to a point
    * Calls C function: void Path_lineTo(void* path, float x, float y)
    */
-  lineTo(x: float, y: float): void {
+  lineTo(x: number, y: number): void {
     this.runner.invokeCanvasKit('Path_lineTo', this.pointer, x, y)
   }
   
@@ -58,16 +58,16 @@ export class Path implements IPath {
    * Calls C function: void DeletePath(void* path)
    */
   delete(): void {
-    if (this.pointer !== nullptr) {
+    if (this.pointer !== 0) {
       this.runner.invokeCanvasKit('DeletePath', this.pointer)
-      this.pointer = nullptr
+      this.pointer = 0
     }
   }
   
   /**
    * Get the native pointer (for internal use)
    */
-  getPointer(): pointer<void> {
+  getPointer(): number {
     return this.pointer
   }
 }
