@@ -1,6 +1,6 @@
 import type { Ptr } from '../types'
 import { Api } from './Api'
-import type { SkPathFillType } from '../enums'
+import type { PathFillType } from '../enums'
 
 export class PathApi extends Api {
   make(): Ptr {
@@ -11,7 +11,7 @@ export class PathApi extends Api {
     this.invoke('DeletePath', ptr)
   }
 
-  setFillType(ptr: Ptr, fillType: SkPathFillType): void {
+  setFillType(ptr: Ptr, fillType: PathFillType): void {
     this.invoke('Path_setFillType', ptr, fillType | 0)
   }
 

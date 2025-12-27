@@ -1,3 +1,34 @@
+export class Size {
+  constructor(
+    public readonly width: number,
+    public readonly height: number,
+  ) {}
+
+  isEmpty(): boolean {
+    return this.width <= 0 || this.height <= 0
+  }
+
+  eq(other: Size | null): boolean {
+    return !!other && other.width === this.width && other.height === this.height
+  }
+
+  mul(scale: number): Size {
+    return new Size(this.width * scale, this.height * scale)
+  }
+
+  div(scale: number): Size {
+    return new Size(this.width / scale, this.height / scale)
+  }
+
+  add(other: Size): Size {
+    return new Size(this.width + other.width, this.height + other.height)
+  }
+
+  sub(other: Size): Size {
+    return new Size(this.width - other.width, this.height - other.height)
+  }
+}
+
 export class Offset {
   static readonly ZERO = new Offset(0, 0)
 
@@ -16,9 +47,24 @@ export class Offset {
   translate(dx: number, dy: number): Offset {
     return new Offset(this.dx + dx, this.dy + dy)
   }
+
+  and(size: Size): Rect {
+    return Rect.fromLTWH(this.dx, this.dy, size.width, size.height)
+  }
+}
+
+interface LTRB extends Array<number> {
+  0: number
+  1: number
+  2: number
+  3: number
 }
 
 export class Rect {
+  static fromLTWH(left: number, top: number, width: number, height: number): Rect {
+    return new Rect(left, top, left + width, top + height)
+  }
+
   readonly left: number
   readonly top: number
   readonly right: number
@@ -43,7 +89,37 @@ export class Rect {
     return this.bottom - this.top
   }
 
-  toLTRB(): [number, number, number, number] {
+  get size(): Size {
+    return new Size(this.width, this.height)
+  }
+
+  get topLeft(): Offset {
+    return new Offset(this.left, this.top)
+  }
+
+  isEmpty(): boolean {
+    return this.width <= 0 || this.height <= 0
+  }
+
+  add(size: Size): Rect {
+    return Rect.fromLTWH(this.left, this.top, this.width + size.width, this.height + size.height)
+  }
+
+  sub(size: Size): Rect {
+    return Rect.fromLTWH(this.left, this.top, this.width - size.width, this.height - size.height)
+  }
+
+  eq(other: Rect | null): boolean {
+    return (
+      !!other &&
+      other.left === this.left &&
+      other.top === this.top &&
+      other.right === this.right &&
+      other.bottom === this.bottom
+    )
+  }
+
+  toLTRB(): LTRB {
     return [this.left, this.top, this.right, this.bottom]
   }
 }

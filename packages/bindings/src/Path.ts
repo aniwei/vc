@@ -2,6 +2,31 @@ import invariant from 'invariant'
 
 import { ManagedObj, ManagedObjRegistry, Ptr } from './ManagedObj'
 import { CanvasKitApi } from './CanvasKitApi'
+import { Rect } from './Geometry'
+import type { PathFillType } from './enums'
+
+function getHeapU8(): Uint8Array {
+  return CanvasKitApi.heapU8()
+}
+
+function writeF32Array(ptr: number, values: ArrayLike<number>): void {
+  const heap = getHeapU8()
+  const f32 = new Float32Array(heap.buffer)
+  const off = (ptr >>> 0) >>> 2
+  for (let i = 0; i < values.length; i++) {
+    f32[off + i] = +values[i]
+  }
+}
+
+function allocF32Array(values: ArrayLike<number>): number {
+  const ptr = CanvasKitApi.malloc(values.length * 4) as number
+  writeF32Array(ptr, values)
+  return ptr
+}
+
+function free(ptr: number): void {
+  CanvasKitApi.free(ptr >>> 0)
+}
 
 class PathPtr extends Ptr {
   constructor(ptr?: number) {
@@ -11,6 +36,7 @@ class PathPtr extends Ptr {
   delete(): void {
     if (!this.isDeleted()) {
       CanvasKitApi.Path.delete(this.ptr)
+      this.ptr = -1
     }
   }
 
@@ -19,524 +45,294 @@ class PathPtr extends Ptr {
   }
 
   clone(): PathPtr {
+    // Alias semantics: this does NOT deep-copy.
     return new PathPtr(this.ptr)
   }
 
   isAliasOf(other: any): boolean {
-    if (other instanceof PathPtr) {
-      return this.ptr === other.ptr
-    }
-
-    return false
+    return other instanceof PathPtr && this.ptr === other.ptr
   }
 
   isDeleted(): boolean {
     return this.ptr === -1
   }
 
-  addOval(forceClose: boolean, dir: number): void {
-    CanvasKitApi.Path.addOval(this.ptr, forceClose ? 1 : 0, dir | 0)
+  setFillType(fillType: PathFillType): void {
+    invariant(!this.isDeleted(), 'PathPtr is deleted')
+    CanvasKitApi.Path.setFillType(this.ptr, fillType)
   }
 
-  addRRect(rrect: any, forceClose: boolean): void {
-    CanvasKitApi.Path.addRRect(this.ptr, rrect as unknown as number[], forceClose ? 1 : 0)
+  moveTo(x: number, y: number): void {
+    invariant(!this.isDeleted(), 'PathPtr is deleted')
+    CanvasKitApi.Path.moveTo(this.ptr, x, y)
   }
 
-  addRect(rect: any): void {
-    CanvasKitApi.Path.addRect(this.ptr, rect as unknown as number[])
+  lineTo(x: number, y: number): void {
+    invariant(!this.isDeleted(), 'PathPtr is deleted')
+    CanvasKitApi.Path.lineTo(this.ptr, x, y)
   }
 
-  addPoly(points: number[], close: boolean): void {
-    CanvasKitApi.Path.addPoly(this.ptr, points, close ? 1 : 0)
+  quadTo(x1: number, y1: number, x2: number, y2: number): void {
+    invariant(!this.isDeleted(), 'PathPtr is deleted')
+    CanvasKitApi.Path.quadTo(this.ptr, x1, y1, x2, y2)
   }
 
-  arcToOval(rect: any, startAngle: number, sweepAngle: number, forceMoveTo: boolean): void {
-    CanvasKitApi.Path.arcTo(this.ptr, rect as unknown as number[], +startAngle, +sweepAngle, forceMoveTo ? 1 : 0)
+  cubicTo(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number): void {
+    invariant(!this.isDeleted(), 'PathPtr is deleted')
+    CanvasKitApi.Path.cubicTo(this.ptr, x1, y1, x2, y2, x3, y3)
   }
 
-  arcToRotated(
+  close(): void {
+    invariant(!this.isDeleted(), 'PathPtr is deleted')
+    CanvasKitApi.Path.close(this.ptr)
+  }
+
+  reset(): void {
+    invariant(!this.isDeleted(), 'PathPtr is deleted')
+    CanvasKitApi.Path.reset(this.ptr)
+  }
+
+  addRect(rect: Rect | [number, number, number, number]): void {
+    invariant(!this.isDeleted(), 'PathPtr is deleted')
+    const [l, t, r, b] = rect instanceof Rect ? rect.toLTRB() : rect
+    CanvasKitApi.Path.addRect(this.ptr, l, t, r, b)
+  }
+
+  addCircle(cx: number, cy: number, r: number): void {
+    invariant(!this.isDeleted(), 'PathPtr is deleted')
+    CanvasKitApi.Path.addCircle(this.ptr, cx, cy, r)
+  }
+
+  addOval(rect: Rect | [number, number, number, number], dir: number = 0, startIndex: number = 0): void {
+    invariant(!this.isDeleted(), 'PathPtr is deleted')
+    const [l, t, r, b] = rect instanceof Rect ? rect.toLTRB() : rect
+    CanvasKitApi.Path.addOval(this.ptr, l, t, r, b, dir | 0, startIndex | 0)
+  }
+
+  addRRectXY(
+    rect: Rect | [number, number, number, number],
     rx: number,
     ry: number,
-    xAxisRotate: number,
-    largeArc: boolean,
-    clockwise: boolean,
-    x: number,
-    y: number
+    dir: number = 0,
+    startIndex: number = 0
   ): void {
-    CanvasKitApi.Path.arcToPoint(
-      this.ptr,
-      +rx,
-      +ry,
-      +xAxisRotate,
-      largeArc ? 1 : 0,
-      clockwise ? 1 : 0,
-      +x,
-      +y)
-  }
-}
-
-//// => Path
-// 路径类
-export class Path extends ManagedObj {
-  static fromSVGString (svg: string) {
-    // TODO    
+    invariant(!this.isDeleted(), 'PathPtr is deleted')
+    const [l, t, r, b] = rect instanceof Rect ? rect.toLTRB() : rect
+    CanvasKitApi.Path.addRRectXY(this.ptr, l, t, r, b, rx, ry, dir | 0, startIndex | 0)
   }
 
-  static from (other: Path) {
-    // 
-  }
-  
-  static combine (pathA: Path, pathB: Path) {
-    // 
-  }
-  
+  addPolygon(pointsXY: ArrayLike<number>, pointCount: number, close: boolean): void {
+    invariant(!this.isDeleted(), 'PathPtr is deleted')
+    invariant(pointCount > 0, 'addPolygon: pointCount must be > 0')
+    invariant(pointsXY.length >= pointCount * 2, 'addPolygon: pointsXY length insufficient')
 
-  // => fillType
-  // 填充方式
-  #fillType: Skia.FillType = Engine.skia.FillType.Winding 
-  public set fillType (fillType: Skia.FillType) {
-    if (this._fillType !== fillType) {
-      this._fillType = fillType
-      this.skia.setFillType(fillType)
+    const pointsPtr = allocF32Array(pointsXY)
+    try {
+      CanvasKitApi.Path.addPolygon(this.ptr, pointsPtr, pointCount | 0, close)
+    } finally {
+      free(pointsPtr)
     }
   }
-  public get fillType (): Skia.FillType {
-    return this._fillType
-  }
-  
-  // 缓存指令
-  public commandsCached: number[] | null = null
 
-  constructor () {
-    super(new PathPtr())
+  addArc(oval: Rect | [number, number, number, number], startAngleDeg: number, sweepAngleDeg: number): void {
+    invariant(!this.isDeleted(), 'PathPtr is deleted')
+    const [l, t, r, b] = oval instanceof Rect ? oval.toLTRB() : oval
+    CanvasKitApi.Path.addArc(this.ptr, l, t, r, b, startAngleDeg, sweepAngleDeg)
   }
 
-  addArc (oval: Rect, startAngle: number, sweepAngle: number): void {
-    const degrees = 180 / Math.PI
-
-    invariant(this.ptr, 'Path pointer is null in addArc.')
-
-    this.ptr.addArc(
-      oval as unknown as number[], 
-      startAngle * degrees, 
-      sweepAngle * degrees
-    )
-  }
-
-  /**
-   * 加入椭圆
-   * @param {Rect} oval
-   * @return {*}
-   */  
-  addOval (oval: Rect) {
-    invariant(this.ptr, 'Path pointer is null in addOval.')
-    this.ptr.addOval(oval, false, 1)
-  }
-
-  /**
-   * 加入路径
-   * @param {Path} path
-   * @param {Offset} offset
-   * @param {Matrix4} matrix4
-   * @return {*}
-   */
-  addPath (
-    path: Path,
-    offset: Offset,
-    matrix4: Matrix4 | null = null
-  ) {
-    let matrix: Float32Array
-    if (matrix4 === null) {
-      matrix = toMatrix(Matrix4.translationValues(offset.dx, offset.dy, 0))
-    } else {
-      matrix = toMatrix(matrix4)
-      matrix[2] += offset.dx
-      matrix[5] += offset.dy
-    }
-
-    this.skia.addPath(
-      path.skia,
-      matrix[0],
-      matrix[1],
-      matrix[2],
-      matrix[3],
-      matrix[4],
-      matrix[5],
-      matrix[6],
-      matrix[7],
-      matrix[8],
-      false
-    )
-  }
-  
-  /**
-   * 加入多边形
-   * @param {Offset} points
-   * @param {boolean} close
-   * @return {*}
-   */
-  addPolygon (points: Offset[], close: boolean) {
-    this.skia.addPoly(toPoints(points), close)
-  }
-
-  /**
-   * 加入圆角矩形
-   * @param {RRect} rrect
-   * @return {void}
-   */
-  addRRect (rrect: RRect) {
-    this.skia.addRRect(rrect, false)
-  }
-
-  /**
-   * 加入矩形 
-   * @param {Rect} rect
-   * @return {void}
-   */
-  addRect (rect: Rect) {
-    this.skia.addRect(rect)
-  }
-
-  /**
-   * 圆角路径
-   * @param {Rect} rect
-   * @param {number} startAngle
-   * @param {number} sweepAngle
-   * @param {boolean} forceMoveTo
-   * @return {*}
-   */
-  arcTo(
-    rect: Rect, 
-    startAngle: number, 
-    sweepAngle: number, 
+  arcToOval(
+    oval: Rect | [number, number, number, number],
+    startAngleDeg: number,
+    sweepAngleDeg: number,
     forceMoveTo: boolean
-  ) {
-    const degrees = 180 / Math.PI
-    this.skia.arcToOval(
-      rect,
-      startAngle * degrees,
-      sweepAngle * degrees,
-      forceMoveTo,
-    )
+  ): void {
+    invariant(!this.isDeleted(), 'PathPtr is deleted')
+    const [l, t, r, b] = oval instanceof Rect ? oval.toLTRB() : oval
+    CanvasKitApi.Path.arcToOval(this.ptr, l, t, r, b, startAngleDeg, sweepAngleDeg, forceMoveTo)
   }
 
-  /**
-   * 圆角路径
-   * @param {Offset} arcEnd
-   * @param {Radius} radius
-   * @param {number} rotation
-   * @param {boolean} largeArc
-   * @param {boolean} clockwise
-   * @return {*}
-   */
-  arcToPoint(
-    arcEnd: Offset,
-    radius: Radius = Radius.ZERO,
-    rotation: number = 0,
-    largeArc: boolean = false,
-    clockwise: boolean = true
-  ) {
-    this.skia.arcToRotated(
-      radius.x,
-      radius.y,
-      rotation,
-      largeArc,
-      clockwise,
-      arcEnd.dx,
-      arcEnd.dy,
-    )
-  }
-
-  /**
-   * @param {boolean} forceClosed
-   * @return {*}
-   */
-  // @MARK
-  computeMetrics (forceClosed: boolean = false) {
-    // return new PathMetrics(this, forceClosed)
-  }
-
-
-  /**
-   * 是否包含某点
-   * @param {Offset} point
-   * @return {*}
-   */
-  contains (point: Offset) {
-    return this.skia.contains(point.dx, point.dy)
-  }
-
-  /**
-   * @description: 
-   * @param {Path} path
-   * @param {Offset} offset
-   * @param {Matrix4} matrix4
-   * @return {*}
-   */
-  extendWithPath (path: Path, offset: Offset, matrix4: Matrix4 | null = null) {
-    let matrix: Float32Array
-    if (matrix4 === null) {
-      matrix = toMatrix(Matrix4.translationValues(offset.dx, offset.dy, 0))
-    } else {
-      matrix = toMatrix(matrix4)
-      matrix[2] += offset.dx
-      matrix[5] += offset.dy
-    }
-    
-    this.skia.addPath(
-      path.skia,
-      matrix[0],
-      matrix[1],
-      matrix[2],
-      matrix[3],
-      matrix[4],
-      matrix[5],
-      matrix[6],
-      matrix[7],
-      matrix[8],
-      true,
-    )
-  }
-
-  /**
-   * 获取矩形范围
-   * @return {Rect}
-   */
-  getBounds (): Rect {
-    const sk = this.skia.getBounds()
-    return Rect.fromLTRB(sk[0], sk[1], sk[2], sk[3])
-  }
-
-  /**
-   * @description: 
-   * @param {number} x
-   * @param {number} y
-   * @return {*}
-   */
-  lineTo (x: number, y: number) {
-    this.skia.lineTo(x, y)
-  }
-
-  /**
-   * @description: 
-   * @param {number} x
-   * @param {number} y
-   * @return {*}
-   */
-  moveTo (x: number, y: number) {
-    this.skia.moveTo(x, y)
-  }
-
-  /**
-   * @description: 
-   * @param {number} x1
-   * @param {number} y1
-   * @param {number} x2
-   * @param {number} y2
-   * @return {*}
-   */
-  quadraticBezierTo (
-    x1: number, 
-    y1: number, 
-    x2: number, 
-    y2: number
-  ) {
-    this.skia.quadTo(x1, y1, x2, y2)
-  }
-
-  /**
-   * @description: 
-   * @param {Offset} arcEndDelta
-   * @param {Radius} radius
-   * @param {number} rotation
-   * @param {boolean} largeArc
-   * @param {boolean} clockwise
-   * @return {*}
-   */
-  relativeArcToPoint (
-    arcEndDelta: Offset,
-    radius: Radius = Radius.ZERO,
-    rotation: number = 0.0,
-    largeArc: boolean = false,
-    clockwise: boolean = true
-  ) {
-    this.skia.rArcTo(
-      radius.x,
-      radius.y,
-      rotation,
-      largeArc,
-      clockwise,
-      arcEndDelta.dx,
-      arcEndDelta.dy,
-    )
-  }
-
-  /**
-   * @param {number} x1
-   * @param {number} y1
-   * @param {number} x2
-   * @param {number} y2
-   * @param {number} w
-   * @return {*}
-   */
-  relativeConicTo (
-    x1: number, 
-    y1: number, 
-    x2: number, 
-    y2: number, 
-    w: number
-  ) {
-    this.skia.rConicTo(x1, y1, x2, y2, w)
-  }
-
-  /**
-   * @param {number} x1
-   * @param {number} y1
-   * @param {number} x2
-   * @param {number} y2
-   * @param {number} x3
-   * @param {number} y3
-   * @return {*}
-   */
-  relativeCubicTo (
-    x1: number, 
-    y1: number, 
-    x2: number, 
-    y2: number, 
-    x3: number, 
-    y3: number
-  ) {
-    this.skia.rCubicTo(x1, y1, x2, y2, x3, y3)
-  }
-
-  /**
-   * @param {number} dx
-   * @param {number} dy
-   * @param {number} dy
-   * @return {*}
-   */
-  relativeLineTo (dx: number, dy: number) {
-    this.skia.rLineTo(dx, dy)
-  }
-
-  /**
-   * 
-   * @param {number} dx 
-   * @param {number} dy 
-   */
-  relativeMoveTo (dx: number, dy: number) {
-    this.skia.rMoveTo(dx, dy)
-  }
-
-  /**
-   * @param {number} x1
-   * @param {number} y1
-   * @param {number} x2
-   * @param {number} y2
-   * @return {*}
-   */
-  relativeQuadraticBezierTo (
-    x1: number, 
-    y1: number, 
-    x2: number, 
-    y2: number
-  ) {
-    invariant(this.skia)
-    this.skia.rQuadTo(x1, y1, x2, y2)
-  }
-
-  /**
-   * @param {number} x1
-   * @param {number} y1
-   * @param {number} x2
-   * @param {number} y2
-   * @param {number} w
-   * @return {*}
-   */
-  conicTo (
-    x1: number, 
-    y1: number, 
-    x2: number, 
-    y2: number, 
-    w: number
-  ) {
-    invariant(this.skia)
-    this.skia.conicTo(x1, y1, x2, y2, w)
-  }
-
-  /**
-   * @param {Matrix4} matrix4
-   * @return {*}
-   */
-  transform (matrix4: Matrix4) {
-    invariant(this.skia)
-    const skia = this.skia.copy() as Skia.Path
-    const m = toMatrix(matrix4)
-    
-    skia.transform(
-      m[0],
-      m[1],
-      m[2],
-      m[3],
-      m[4],
-      m[5],
-      m[6],
-      m[7],
-      m[8],
-    )
-    return Path.fromSkia(skia, this.fillType)
-  }
-
-  /**
-   * @description: 
-   * @param {Offset} offset
-   * @return {*}
-   */
-  shift (offset: Offset) {
-    const skia = this.skia.copy()
-    skia.transform(
-      1.0, 0.0, offset.dx,
-      0.0, 1.0, offset.dy,
-      0.0, 0.0, 1.0,
-    )
-    return Path.fromSkia(skia!, this.fillType)
-  }
-
-  /**
-   * 关闭路径
-   * @return {void}
-   */
-  close () {
-    this.skia.close()
-  }
-
-  /**
-   * 重置路径内容
-   * @return {void}
-   */
-  reset () {
-    this._fillType = Engine.skia.FillType.Winding
-    this.skia.close()
-  }
-
-  /**
-   * @return {Skia.Path}
-   */
-  resurrect (): Skia.Path {
-    return Path.resurrect(this.cachedCommands ?? [], this.fillType)
-  }
-
-  /**
-   * @description: 
-   * @return {*}
-   */
-  toSVGString (): string | null {
-    return this.skia.toSVGString() ?? null
-  }
-
-  toStrin () {
-    return `Path()`
+  snapshot(): number {
+    invariant(!this.isDeleted(), 'PathPtr is deleted')
+    return CanvasKitApi.Path.snapshot(this.ptr)
   }
 }
 
+type PathKind = 'builder' | 'snapshot'
 
+class SnapshotPathPtr extends Ptr {
+  constructor(ptr?: number) {
+    super(ptr ?? -1)
+  }
+
+  delete(): void {
+    if (!this.isDeleted()) {
+      CanvasKitApi.Path.deleteSkPath(this.ptr)
+      this.ptr = -1
+    }
+  }
+
+  deleteLater(): void {
+    ManagedObjRegistry.cleanUp(this)
+  }
+
+  clone(): SnapshotPathPtr {
+    return new SnapshotPathPtr(this.ptr)
+  }
+
+  isAliasOf(other: any): boolean {
+    return other instanceof SnapshotPathPtr && this.ptr === other.ptr
+  }
+
+  isDeleted(): boolean {
+    return this.ptr === -1
+  }
+
+  transform(m9: ArrayLike<number>): void {
+    invariant(!this.isDeleted(), 'Path snapshot is deleted')
+    invariant(m9.length === 9, `transform: expected 9 floats, got ${m9.length}`)
+
+    const mPtr = allocF32Array(m9)
+    try {
+      CanvasKitApi.Path.transform(this.ptr, mPtr)
+    } finally {
+      free(mPtr)
+    }
+  }
+}
+
+export class Path extends ManagedObj {
+  #fillType: PathFillType = 0 as PathFillType
+  #kind: PathKind
+
+  constructor(kind: PathKind = 'builder', ptr?: Ptr) {
+    super(ptr ?? (kind === 'builder' ? new PathPtr() : new SnapshotPathPtr(-1)))
+    this.#kind = kind
+  }
+
+  resurrect(): Ptr {
+    // NOTE: Path always passes an explicit Ptr into super(), so resurrect() is not used.
+    // Keep this for base-class compatibility.
+    return new PathPtr()
+  }
+
+  get raw(): PathPtr {
+    invariant(this.#kind === 'builder', 'Path is a snapshot; builder operations are not allowed')
+    return this.ptr as unknown as PathPtr
+  }
+
+  get #rawSnapshot(): SnapshotPathPtr {
+    invariant(this.#kind === 'snapshot', 'Path is a builder; snapshot operations are not allowed')
+    return this.ptr as unknown as SnapshotPathPtr
+  }
+
+  set fillType(fillType: PathFillType) {
+    if (this.#fillType !== fillType) {
+      this.#fillType = fillType
+      this.raw.setFillType(fillType)
+    }
+  }
+
+  get fillType(): PathFillType {
+    return this.#fillType
+  }
+
+  setFillType(fillType: PathFillType): this {
+    this.fillType = fillType
+    return this
+  }
+
+  moveTo(x: number, y: number): this {
+    this.raw.moveTo(x, y)
+    return this
+  }
+
+  lineTo(x: number, y: number): this {
+    this.raw.lineTo(x, y)
+    return this
+  }
+
+  quadTo(x1: number, y1: number, x2: number, y2: number): this {
+    this.raw.quadTo(x1, y1, x2, y2)
+    return this
+  }
+
+  cubicTo(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number): this {
+    this.raw.cubicTo(x1, y1, x2, y2, x3, y3)
+    return this
+  }
+
+  close(): this {
+    this.raw.close()
+    return this
+  }
+
+  reset(): this {
+    this.raw.reset()
+    return this
+  }
+
+  addRect(rect: Rect | [number, number, number, number]): this {
+    this.raw.addRect(rect)
+    return this
+  }
+
+  addCircle(cx: number, cy: number, r: number): this {
+    this.raw.addCircle(cx, cy, r)
+    return this
+  }
+
+  addOval(rect: Rect | [number, number, number, number], dir: number = 0, startIndex: number = 0): this {
+    this.raw.addOval(rect, dir, startIndex)
+    return this
+  }
+
+  addRRectXY(
+    rect: Rect | [number, number, number, number],
+    rx: number,
+    ry: number,
+    dir: number = 0,
+    startIndex: number = 0
+  ): this {
+    this.raw.addRRectXY(rect, rx, ry, dir, startIndex)
+    return this
+  }
+
+  addPolygon(pointsXY: ArrayLike<number>, pointCount: number, close: boolean): this {
+    this.raw.addPolygon(pointsXY, pointCount, close)
+    return this
+  }
+
+  addArc(oval: Rect | [number, number, number, number], startAngleDeg: number, sweepAngleDeg: number): this {
+    this.raw.addArc(oval, startAngleDeg, sweepAngleDeg)
+    return this
+  }
+
+  arcToOval(
+    oval: Rect | [number, number, number, number],
+    startAngleDeg: number,
+    sweepAngleDeg: number,
+    forceMoveTo: boolean
+  ): this {
+    this.raw.arcToOval(oval, startAngleDeg, sweepAngleDeg, forceMoveTo)
+    return this
+  }
+
+  snapshot(): Path {
+    const skPathPtr = this.raw.snapshot()
+    return new Path('snapshot', new SnapshotPathPtr(skPathPtr))
+  }
+
+  transform(m9: ArrayLike<number>): this {
+    this.#rawSnapshot.transform(m9)
+    return this
+  }
+
+  dispose(): void {
+    if (this.#kind === 'builder') {
+      ;(this.ptr as unknown as PathPtr).deleteLater()
+    } else {
+      ;(this.ptr as unknown as SnapshotPathPtr).deleteLater()
+    }
+    super.dispose()
+  }
+}

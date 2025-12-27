@@ -13,6 +13,12 @@
 extern "C" {
 #endif
 
+// Enums (exported as ints)
+int SkPathFillType_Winding();
+int SkPathFillType_EvenOdd();
+int SkPathFillType_InverseWinding();
+int SkPathFillType_InverseEvenOdd();
+
 // Paint
 void* MakePaint();
 void DeletePaint(void* paint);
@@ -30,12 +36,33 @@ void Paint_setColorFilter(void* paint, void* colorFilter);
 // Path (builder-backed)
 void* MakePath();
 void DeletePath(void* path);
+void Path_setFillType(void* path, int fillType);
 void Path_moveTo(void* path, float x, float y);
 void Path_lineTo(void* path, float x, float y);
 void Path_quadTo(void* path, float x1, float y1, float x2, float y2);
 void Path_cubicTo(void* path, float x1, float y1, float x2, float y2, float x3, float y3);
 void Path_addRect(void* path, float left, float top, float right, float bottom);
 void Path_addCircle(void* path, float cx, float cy, float r);
+void Path_addOval(void* path, float left, float top, float right, float bottom, int dir, int startIndex);
+void Path_addRRectXY(void* path,
+                     float left,
+                     float top,
+                     float right,
+                     float bottom,
+                     float rx,
+                     float ry,
+                     int dir,
+                     int startIndex);
+void Path_addPolygon(void* path, const float* pointsXY, int pointCount, int close);
+void Path_addArc(void* path, float left, float top, float right, float bottom, float startAngleDeg, float sweepAngleDeg);
+void Path_arcToOval(void* path,
+                    float left,
+                    float top,
+                    float right,
+                    float bottom,
+                    float startAngleDeg,
+                    float sweepAngleDeg,
+                    int forceMoveTo);
 void Path_close(void* path);
 void Path_reset(void* path);
 
@@ -54,13 +81,14 @@ int Surface_width(void* surface);
 int Surface_height(void* surface);
 void* Surface_makeImageSnapshot(void* surface);
 void* Surface_encodeToPNG(void* surface);
-int Surface_readPixelsRGBA8888(void* surface,
-                              int x,
-                              int y,
-                              int width,
-                              int height,
-                              void* dst,
-                              int dstRowBytes);
+int Surface_readPixelsRGBA8888(
+  void* surface,
+  int x,
+  int y,
+  int width,
+  int height,
+  void* dst,
+  int dstRowBytes);
 
 // Canvas
 void Canvas_clear(void* canvas, uint32_t color);
@@ -70,18 +98,34 @@ void Canvas_drawSkPath(void* canvas, void* skPath, void* paint);
 void Canvas_drawCircle(void* canvas, float cx, float cy, float radius, void* paint);
 void Canvas_drawLine(void* canvas, float x0, float y0, float x1, float y1, void* paint);
 void Canvas_drawImage(void* canvas, void* image, float x, float y, int filterMode, int mipmapMode);
-void Canvas_drawImageRect(void* canvas,
-                          void* image,
-                          float srcLeft,
-                          float srcTop,
-                          float srcRight,
-                          float srcBottom,
-                          float dstLeft,
-                          float dstTop,
-                          float dstRight,
-                          float dstBottom,
-                          int filterMode,
-                          int mipmapMode);
+void Canvas_drawImageWithPaint(void* canvas, void* image, float x, float y, int filterMode, int mipmapMode, void* paint);
+void Canvas_drawImageRect(
+  void* canvas,
+  void* image,
+  float srcLeft,
+  float srcTop,
+  float srcRight,
+  float srcBottom,
+  float dstLeft,
+  float dstTop,
+  float dstRight,
+  float dstBottom,
+  int filterMode,
+  int mipmapMode);
+void Canvas_drawImageRectWithPaint(
+  void* canvas,
+  void* image,
+  float srcLeft,
+  float srcTop,
+  float srcRight,
+  float srcBottom,
+  float dstLeft,
+  float dstTop,
+  float dstRight,
+  float dstBottom,
+  int filterMode,
+  int mipmapMode,
+  void* paint);
 void Canvas_drawTextBlob(void* canvas, void* blob, float x, float y, void* paint);
 int Canvas_save(void* canvas);
 void Canvas_restore(void* canvas);
@@ -90,18 +134,27 @@ void Canvas_scale(void* canvas, float sx, float sy);
 void Canvas_rotate(void* canvas, float degrees);
 void Canvas_concat(void* canvas, const float* m9);
 void Canvas_setMatrix(void* canvas, const float* m9);
-void Canvas_clipRect(void* canvas,
-                     float left,
-                     float top,
-                     float right,
-                     float bottom,
-                     int clipOp,
-                     int doAA);
+void Canvas_clipRect(
+  void* canvas,
+  float left,
+  float top,
+  float right,
+  float bottom,
+  int clipOp,
+  int doAA);
 
 // Image / Data
 void DeleteImage(void* image);
 int Image_width(void* image);
 int Image_height(void* image);
+int Image_readPixelsRGBA8888(
+  void* image,
+  int x,
+  int y,
+  int width,
+  int height,
+  void* dst,
+  int dstRowBytes);
 void* Image_encodeToPNG(void* image);
 void* MakeImageFromEncoded(const void* bytes, int size);
 
@@ -112,14 +165,15 @@ int Data_size(void* data);
 // Shader
 void DeleteShader(void* shader);
 void* MakeColorShader(uint32_t color);
-void* MakeLinearGradientShader(float x0,
-                              float y0,
-                              float x1,
-                              float y1,
-                              const uint32_t* colors,
-                              const float* positions,
-                              int count,
-                              int tileMode);
+void* MakeLinearGradientShader(
+  float x0,
+  float y0,
+  float x1,
+  float y1,
+  const uint32_t* colors,
+  const float* positions,
+  int count,
+  int tileMode);
 
 // ColorFilter
 void DeleteColorFilter(void* colorFilter);
@@ -143,15 +197,16 @@ void* MakeTextBlobFromText(const void* bytes, int byteLength, void* font, int en
 // Paragraph (SkParagraph)
 // Returns an owned paragraph handle (not a raw skia::textlayout::Paragraph*).
 // Call DeleteParagraph() when done.
-void* MakeParagraphFromText(const char* utf8,
-                            int byteLength,
-                            const void* fontBytes,
-                            int fontByteLength,
-                            float fontSize,
-                            float wrapWidth,
-                            uint32_t color,
-                            int textAlign,
-                            int maxLines);
+void* MakeParagraphFromText(
+  const char* utf8,
+  int byteLength,
+  const void* fontBytes,
+  int fontByteLength,
+  float fontSize,
+  float wrapWidth,
+  uint32_t color,
+  int textAlign,
+  int maxLines);
 void Paragraph_layout(void* paragraph, float width);
 void DeleteParagraph(void* paragraph);
 void Canvas_drawParagraph(void* canvas, void* paragraph, float x, float y);

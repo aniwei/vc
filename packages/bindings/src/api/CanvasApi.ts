@@ -1,5 +1,5 @@
-import type { Ptr } from '../types'
 import { Api } from './Api'
+import type { Ptr } from '../types'
 import type { ClipOp, FilterMode, MipmapMode } from '../enums'
 
 export class CanvasApi extends Api {
@@ -63,6 +63,18 @@ export class CanvasApi extends Api {
     this.invoke('Canvas_drawImage', canvas, image, +x, +y, filterMode | 0, mipmapMode | 0)
   }
 
+  drawImageWithPaint(
+    canvas: Ptr,
+    image: Ptr,
+    x: number,
+    y: number,
+    filterMode: FilterMode,
+    mipmapMode: MipmapMode,
+    paint: Ptr
+  ): void {
+    this.invoke('Canvas_drawImageWithPaint', canvas, image, +x, +y, filterMode | 0, mipmapMode | 0, paint)
+  }
+
   drawImageRect(
     canvas: Ptr,
     image: Ptr,
@@ -91,6 +103,39 @@ export class CanvasApi extends Api {
       +dstB,
       filterMode | 0,
       mipmapMode | 0
+    )
+  }
+
+  drawImageRectWithPaint(
+    canvas: Ptr,
+    image: Ptr,
+    srcL: number,
+    srcT: number,
+    srcR: number,
+    srcB: number,
+    dstL: number,
+    dstT: number,
+    dstR: number,
+    dstB: number,
+    filterMode: FilterMode,
+    mipmapMode: MipmapMode,
+    paint: Ptr
+  ): void {
+    this.invoke(
+      'Canvas_drawImageRectWithPaint',
+      canvas,
+      image,
+      +srcL,
+      +srcT,
+      +srcR,
+      +srcB,
+      +dstL,
+      +dstT,
+      +dstR,
+      +dstB,
+      filterMode | 0,
+      mipmapMode | 0,
+      paint
     )
   }
 

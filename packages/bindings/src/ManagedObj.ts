@@ -26,13 +26,13 @@ export abstract class Ptr extends Raw<Ptr> {
     return this.#ptr
   }
 
+  set ptr (ptr: number) {
+    this.#ptr = ptr
+  }
+
   constructor (ptr?: number) {
     super()
     this.#ptr = ptr ?? -1
-  }
-
-  protected _setPtr (ptr: number): void {
-    this.#ptr = ptr
   }
 }
 

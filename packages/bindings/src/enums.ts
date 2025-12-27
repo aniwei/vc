@@ -1,4 +1,4 @@
-export enum SkPathFillType {
+export enum PathFillType {
   Winding = 0,
   EvenOdd = 1,
   InverseWinding = 2,

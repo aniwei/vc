@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "gen:canvaskitapi": "tsx scripts/getEnums.ts",
-    "build": "pnpm run gen:canvaskitapi && tsc -p tsconfig.json",
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && pnpm run gen:canvaskitapi && tsc -p tsconfig.json",
     "smoke": "pnpm run build && node dist/smoke.js"
   },
   "keywords": [],

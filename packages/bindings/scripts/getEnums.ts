@@ -13,7 +13,7 @@ async function main() {
   const inverseEvenOdd = CanvasKitApi.invoke('SkPathFillType_InverseEvenOdd')
 
   const js = []
-  js.push(`export enum SkPathFillType {`)
+  js.push(`export enum PathFillType {`)
   js.push(`  Winding = ${winding},`)
   js.push(`  EvenOdd = ${evenOdd},`)
   js.push(`  InverseWinding = ${inverseWinding},`)

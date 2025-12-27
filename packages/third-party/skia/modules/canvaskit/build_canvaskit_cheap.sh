@@ -25,6 +25,12 @@ source "${EMSDK_DIR}/emsdk_env.sh" >/dev/null 2>&1 || true
 
 EMXX="${EMXX:-${EMSDK_DIR}/upstream/emscripten/em++}"
 
+if [[ ! -x "${EMXX}" ]]; then
+  echo "error: em++ not found or not executable at ${EMXX}" >&2
+  echo "hint: ensure EMSDK_DIR points at a valid emsdk checkout and run 'emsdk install' + 'emsdk activate'" >&2
+  exit 1
+fi
+
 if [[ ! -f "${SKIA_BUILD_DIR}/libskia.a" ]]; then
   echo "error: libskia.a not found in ${SKIA_BUILD_DIR}" >&2
   echo "hint: build it first via modules/canvaskit/compile.sh (or your Skia GN build)" >&2
@@ -34,7 +40,15 @@ fi
 # CanvasKit's GN build produces image codec objects under obj/src/codec but they
 # are not archived into libskia.a in this configuration. Include them explicitly
 # so MakeImageFromEncoded can decode PNG/JPG/WebP.
+shopt -s nullglob
 CODEC_OBJS=("${SKIA_BUILD_DIR}/obj/src/codec"/*.o)
+shopt -u nullglob
+
+if [[ ${#CODEC_OBJS[@]} -eq 0 ]]; then
+  echo "error: codec object files not found in ${SKIA_BUILD_DIR}/obj/src/codec" >&2
+  echo "hint: ensure SKIA_BUILD_DIR is a CanvasKit GN build output (e.g. run modules/canvaskit/compile.sh first)" >&2
+  exit 1
+fi
 
 "${EMXX}" \
   -O3 \
@@ -68,8 +82,16 @@ CODEC_OBJS=("${SKIA_BUILD_DIR}/obj/src/codec"/*.o)
   -sSIDE_MODULE=0 \
   -sMALLOC=none \
   -sERROR_ON_UNDEFINED_SYMBOLS=0 \
-  -sEXPORTED_FUNCTIONS='["_malloc","_free","_MakePaint","_DeletePaint","_Paint_setColor","_Paint_setAntiAlias","_Paint_setStyle","_Paint_setStrokeWidth","_Paint_setStrokeCap","_Paint_setStrokeJoin","_Paint_setAlphaf","_Paint_setBlendMode","_Paint_setShader","_Paint_setColorFilter","_MakePath","_DeletePath","_Path_moveTo","_Path_lineTo","_Path_quadTo","_Path_cubicTo","_Path_close","_Path_reset","_Path_addRect","_Path_addCircle","_Path_snapshot","_DeleteSkPath","_Path_transform","_MakeCanvasSurface","_MakeSWCanvasSurface","_DeleteSurface","_Surface_getCanvas","_Surface_flush","_Surface_width","_Surface_height","_Surface_makeImageSnapshot","_Surface_encodeToPNG","_Surface_readPixelsRGBA8888","_Canvas_clear","_Canvas_drawRect","_Canvas_drawPath","_Canvas_drawSkPath","_Canvas_drawCircle","_Canvas_drawLine","_Canvas_drawImage","_Canvas_drawImageRect","_Canvas_drawTextBlob","_Canvas_drawParagraph","_Canvas_save","_Canvas_restore","_Canvas_translate","_Canvas_scale","_Canvas_rotate","_Canvas_concat","_Canvas_setMatrix","_Canvas_clipRect","_DeleteImage","_Image_width","_Image_height","_Image_readPixelsRGBA8888","_Image_encodeToPNG","_MakeImageFromEncoded","_DeleteData","_Data_bytes","_Data_size","_DeleteShader","_MakeColorShader","_MakeLinearGradientShader","_DeleteColorFilter","_MakeBlendColorFilter","_MakeFont","_DeleteFont","_Font_setSize","_Font_setEdging","_MakeTypefaceFromData","_DeleteTypeface","_Font_setTypeface","_DeleteTextBlob","_MakeTextBlobFromText","_MakeParagraphFromText","_Paragraph_layout","_DeleteParagraph"]' \
+  -sEXPORTED_FUNCTIONS='["_malloc","_free","_SkPathFillType_Winding","_SkPathFillType_EvenOdd","_SkPathFillType_InverseWinding","_SkPathFillType_InverseEvenOdd","_MakePaint","_DeletePaint","_Paint_setColor","_Paint_setAntiAlias","_Paint_setStyle","_Paint_setStrokeWidth","_Paint_setStrokeCap","_Paint_setStrokeJoin","_Paint_setAlphaf","_Paint_setBlendMode","_Paint_setShader","_Paint_setColorFilter","_MakePath","_DeletePath","_Path_setFillType","_Path_moveTo","_Path_lineTo","_Path_quadTo","_Path_cubicTo","_Path_close","_Path_reset","_Path_addRect","_Path_addCircle","_Path_addOval","_Path_addRRectXY","_Path_addPolygon","_Path_addArc","_Path_arcToOval","_Path_snapshot","_DeleteSkPath","_Path_transform","_MakeCanvasSurface","_MakeSWCanvasSurface","_DeleteSurface","_Surface_getCanvas","_Surface_flush","_Surface_width","_Surface_height","_Surface_makeImageSnapshot","_Surface_encodeToPNG","_Surface_readPixelsRGBA8888","_Canvas_clear","_Canvas_drawRect","_Canvas_drawPath","_Canvas_drawSkPath","_Canvas_drawCircle","_Canvas_drawLine","_Canvas_drawImage","_Canvas_drawImageWithPaint","_Canvas_drawImageRect","_Canvas_drawImageRectWithPaint","_Canvas_drawTextBlob","_Canvas_drawParagraph","_Canvas_save","_Canvas_restore","_Canvas_translate","_Canvas_scale","_Canvas_rotate","_Canvas_concat","_Canvas_setMatrix","_Canvas_clipRect","_DeleteImage","_Image_width","_Image_height","_Image_readPixelsRGBA8888","_Image_encodeToPNG","_MakeImageFromEncoded","_DeleteData","_Data_bytes","_Data_size","_DeleteShader","_MakeColorShader","_MakeLinearGradientShader","_DeleteColorFilter","_MakeBlendColorFilter","_MakeFont","_DeleteFont","_Font_setSize","_Font_setEdging","_MakeTypefaceFromData","_DeleteTypeface","_Font_setTypeface","_DeleteTextBlob","_MakeTextBlobFromText","_MakeParagraphFromText","_Paragraph_layout","_DeleteParagraph"]' \
   --no-entry \
   -o "${OUT_DIR}/canvaskit.wasm"
 
 echo "ok: ${OUT_DIR}/canvaskit.wasm"
+
+# Optional: keep perf-web's public asset in sync for local runs and codegen.
+VC_ROOT="$(cd "${BASE_DIR}/../../../../.." && pwd)"
+PERF_WASM_DST="${VC_ROOT}/packages/perf-web/public/cheap/canvaskit.wasm"
+if [[ -d "$(dirname "${PERF_WASM_DST}")" ]]; then
+  cp -f "${OUT_DIR}/canvaskit.wasm" "${PERF_WASM_DST}"
+  echo "ok: synced ${PERF_WASM_DST}"
+fi

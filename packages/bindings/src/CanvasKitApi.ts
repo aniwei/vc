@@ -256,10 +256,15 @@ function makeApi(runner: any) {
     invoke('free', ptr >>> 0)
   }
 
-  const allocBytes = (bytes: Uint8Array): Ptr => {
+  const alloc = (bytes: Uint8Array): Ptr => {
     const ptr = malloc(bytes.length)
     writeBytes(ptr, bytes)
     return ptr
+  }
+
+  const allocBytes = (bytes: ArrayLike<number> | Uint8Array): Ptr => {
+    const u8 = bytes instanceof Uint8Array ? bytes : Uint8Array.from(bytes)
+    return alloc(u8)
   }
 
 
@@ -270,6 +275,7 @@ function makeApi(runner: any) {
     malloc,
     free,
     invoke,
+    alloc,
     allocBytes,
 
     Path: new PathApi(resolver),
@@ -385,5 +391,30 @@ export class CanvasKitApi {
   static invoke(name: string, ...args: any[]): any {
     invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
     return this.#api.invoke(name, ...args)
+  }
+
+  static malloc(size: number): Ptr {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return this.#api.malloc(size)
+  }
+
+  static free(ptr: Ptr): void {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    this.#api.free(ptr)
+  }
+
+  static alloc(bytes: Uint8Array): Ptr {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return this.#api.alloc(bytes)
+  }
+
+  static heapU8(): Uint8Array {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return heapU8()
+  }
+
+  static allocBytes(bytes: ArrayLike<number> | Uint8Array): Ptr {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return this.#api.allocBytes(bytes)
   }
 }

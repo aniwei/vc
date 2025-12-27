@@ -13,6 +13,7 @@
 #include "include/core/SkPath.h"
 #include "include/core/SkPathBuilder.h"
 #include "include/core/SkRect.h"
+#include "include/core/SkRRect.h"
 #include "include/core/SkSamplingOptions.h"
 #include "include/core/SkShader.h"
 #include "include/core/SkStream.h"
@@ -48,6 +49,23 @@
 #include <vector>
 
 extern "C" {
+
+// Enums (exported as ints)
+int SkPathFillType_Winding() {
+  return static_cast<int>(SkPathFillType::kWinding);
+}
+
+int SkPathFillType_EvenOdd() {
+  return static_cast<int>(SkPathFillType::kEvenOdd);
+}
+
+int SkPathFillType_InverseWinding() {
+  return static_cast<int>(SkPathFillType::kInverseWinding);
+}
+
+int SkPathFillType_InverseEvenOdd() {
+  return static_cast<int>(SkPathFillType::kInverseEvenOdd);
+}
 
 // Provided by cheap runtime via WebAssemblyRunner imports.
 void* __libc_malloc(size_t size);
@@ -159,9 +177,10 @@ SkMatrix MatrixFromPtr(const float* m9) {
     return SkMatrix::I();
   }
   // SkMatrix uses [scaleX, skewX, transX, skewY, scaleY, transY, persp0, persp1, persp2]
-  return SkMatrix::MakeAll(m9[0], m9[1], m9[2],
-                           m9[3], m9[4], m9[5],
-                           m9[6], m9[7], m9[8]);
+  return SkMatrix::MakeAll(
+    m9[0], m9[1], m9[2],
+    m9[3], m9[4], m9[5],
+    m9[6], m9[7], m9[8]);
 }
 
 }  // namespace
@@ -216,6 +235,13 @@ void* MakePath() {
 
 void DeletePath(void* path) {
   delete static_cast<SkPathBuilder*>(path);
+}
+
+void Path_setFillType(void* path, int fillType) {
+  if (!path) {
+    return;
+  }
+  static_cast<SkPathBuilder*>(path)->setFillType(static_cast<SkPathFillType>(fillType));
 }
 
 void Path_moveTo(void* path, float x, float y) {
@@ -320,20 +346,22 @@ void* Surface_encodeToPNG(void* surface) {
 }
 
 // Read RGBA pixels into caller-provided buffer (dst). Returns 1 on success.
-int Surface_readPixelsRGBA8888(void* surface,
-                              int x,
-                              int y,
-                              int width,
-                              int height,
-                              void* dst,
-                              int dstRowBytes) {
+int Surface_readPixelsRGBA8888(
+  void* surface,
+  int x,
+  int y,
+  int width,
+  int height,
+  void* dst,
+  int dstRowBytes) {
   if (!surface || !dst || width <= 0 || height <= 0 || dstRowBytes <= 0) {
     return 0;
   }
-  SkImageInfo info = SkImageInfo::Make(width,
-                                      height,
-                                      kRGBA_8888_SkColorType,
-                                      kPremul_SkAlphaType);
+  SkImageInfo info = SkImageInfo::Make(
+    width,
+    height,
+    kRGBA_8888_SkColorType,
+    kPremul_SkAlphaType);
   SkPixmap pixmap(info, dst, dstRowBytes);
   return static_cast<SkSurface*>(surface)->readPixels(pixmap, x, y) ? 1 : 0;
 }
@@ -358,8 +386,9 @@ void Canvas_drawSkPath(void* canvas, void* skPath, void* paint) {
   if (!canvas || !skPath || !paint) {
     return;
   }
-  static_cast<SkCanvas*>(canvas)->drawPath(*static_cast<SkPath*>(skPath),
-                                           *static_cast<SkPaint*>(paint));
+  static_cast<SkCanvas*>(canvas)->drawPath(
+    *static_cast<SkPath*>(skPath),
+    *static_cast<SkPaint*>(paint));
 }
 
 void Canvas_drawCircle(void* canvas, float cx, float cy, float radius, void* paint) {
@@ -404,13 +433,14 @@ void Canvas_setMatrix(void* canvas, const float* m9) {
   static_cast<SkCanvas*>(canvas)->setMatrix(MatrixFromPtr(m9));
 }
 
-void Canvas_clipRect(void* canvas,
-                     float left,
-                     float top,
-                     float right,
-                     float bottom,
-                     int clipOp,
-                     bool doAA) {
+void Canvas_clipRect(
+  void* canvas,
+  float left,
+  float top,
+  float right,
+  float bottom,
+  int clipOp,
+  bool doAA) {
   if (!canvas) {
     return;
   }
@@ -426,18 +456,39 @@ void Canvas_drawImage(void* canvas, void* image, float x, float y, int filterMod
   static_cast<SkCanvas*>(canvas)->drawImage(static_cast<SkImage*>(image), x, y, sampling, nullptr);
 }
 
-void Canvas_drawImageRect(void* canvas,
-                          void* image,
-                          float srcLeft,
-                          float srcTop,
-                          float srcRight,
-                          float srcBottom,
-                          float dstLeft,
-                          float dstTop,
-                          float dstRight,
-                          float dstBottom,
-                          int filterMode,
-                          int mipmapMode) {
+void Canvas_drawImageWithPaint(
+  void* canvas,
+  void* image,
+  float x,
+  float y,
+  int filterMode,
+  int mipmapMode,
+  void* paint) {
+  if (!canvas || !image) {
+    return;
+  }
+  SkSamplingOptions sampling(ToFilterMode(filterMode), ToMipmapMode(mipmapMode));
+  static_cast<SkCanvas*>(canvas)->drawImage(
+    static_cast<SkImage*>(image),
+    x,
+    y,
+    sampling,
+    static_cast<SkPaint*>(paint));
+}
+
+void Canvas_drawImageRect(
+  void* canvas,
+  void* image,
+  float srcLeft,
+  float srcTop,
+  float srcRight,
+  float srcBottom,
+  float dstLeft,
+  float dstTop,
+  float dstRight,
+  float dstBottom,
+  int filterMode,
+  int mipmapMode) {
   if (!canvas || !image) {
     return;
   }
@@ -450,6 +501,35 @@ void Canvas_drawImageRect(void* canvas,
                                                sampling,
                                                nullptr,
                                                SkCanvas::kFast_SrcRectConstraint);
+}
+
+void Canvas_drawImageRectWithPaint(
+  void* canvas,
+  void* image,
+  float srcLeft,
+  float srcTop,
+  float srcRight,
+  float srcBottom,
+  float dstLeft,
+  float dstTop,
+  float dstRight,
+  float dstBottom,
+  int filterMode,
+  int mipmapMode,
+  void* paint) {
+  if (!canvas || !image) {
+    return;
+  }
+  const SkRect src = SkRect::MakeLTRB(srcLeft, srcTop, srcRight, srcBottom);
+  const SkRect dst = SkRect::MakeLTRB(dstLeft, dstTop, dstRight, dstBottom);
+  SkSamplingOptions sampling(ToFilterMode(filterMode), ToMipmapMode(mipmapMode));
+  static_cast<SkCanvas*>(canvas)->drawImageRect(
+    static_cast<SkImage*>(image),
+    src,
+    dst,
+    sampling,
+    static_cast<SkPaint*>(paint),
+    SkCanvas::kFast_SrcRectConstraint);
 }
 
 // Image
@@ -466,20 +546,22 @@ int Image_height(void* image) {
 }
 
 // Read RGBA pixels from the image into caller-provided buffer (dst). Returns 1 on success.
-int Image_readPixelsRGBA8888(void* image,
-                             int x,
-                             int y,
-                             int width,
-                             int height,
-                             void* dst,
-                             int dstRowBytes) {
+int Image_readPixelsRGBA8888(
+  void* image,
+  int x,
+  int y,
+  int width,
+  int height,
+  void* dst,
+  int dstRowBytes) {
   if (!image || !dst || width <= 0 || height <= 0 || dstRowBytes <= 0) {
     return 0;
   }
-  SkImageInfo info = SkImageInfo::Make(width,
-                                      height,
-                                      kRGBA_8888_SkColorType,
-                                      kPremul_SkAlphaType);
+  SkImageInfo info = SkImageInfo::Make(
+    width,
+    height,
+    kRGBA_8888_SkColorType,
+    kPremul_SkAlphaType);
   SkPixmap pixmap(info, dst, dstRowBytes);
   return static_cast<SkImage*>(image)->readPixels(pixmap, x, y) ? 1 : 0;
 }
@@ -501,10 +583,11 @@ void* Image_encodeToPNG(void* image) {
     return nullptr;
   }
 
-  SkImageInfo info = SkImageInfo::Make(w,
-                                      h,
-                                      kRGBA_8888_SkColorType,
-                                      kPremul_SkAlphaType);
+  SkImageInfo info = SkImageInfo::Make(
+    w,
+    h,
+    kRGBA_8888_SkColorType,
+    kPremul_SkAlphaType);
   const size_t rowBytes = info.minRowBytes();
   const size_t byteSize = info.computeByteSize(rowBytes);
   if (byteSize == 0) {
@@ -738,10 +821,11 @@ void* MakeTextBlobFromText(const void* bytes, int byteLength, void* font, int en
   if (!bytes || byteLength <= 0 || !font) {
     return nullptr;
   }
-  sk_sp<SkTextBlob> blob = SkTextBlob::MakeFromText(bytes,
-                                                   static_cast<size_t>(byteLength),
-                                                   *static_cast<SkFont*>(font),
-                                                   ToTextEncoding(encoding));
+  sk_sp<SkTextBlob> blob = SkTextBlob::MakeFromText(
+    bytes,
+    static_cast<size_t>(byteLength),
+    *static_cast<SkFont*>(font),
+    ToTextEncoding(encoding));
   if (!blob) {
     return nullptr;
   }
@@ -749,15 +833,16 @@ void* MakeTextBlobFromText(const void* bytes, int byteLength, void* font, int en
   return blob.get();
 }
 
-void* MakeParagraphFromText(const char* utf8,
-                            int byteLength,
-                            const void* fontBytes,
-                            int fontByteLength,
-                            float fontSize,
-                            float wrapWidth,
-                            uint32_t color,
-                            int textAlign,
-                            int maxLines) {
+void* MakeParagraphFromText(
+  const char* utf8,
+  int byteLength,
+  const void* fontBytes,
+  int fontByteLength,
+  float fontSize,
+  float wrapWidth,
+  uint32_t color,
+  int textAlign,
+  int maxLines) {
   if (!utf8 || byteLength <= 0) {
     return nullptr;
   }
@@ -855,10 +940,11 @@ void Canvas_drawTextBlob(void* canvas, void* blob, float x, float y, void* paint
   if (!canvas || !blob || !paint) {
     return;
   }
-  static_cast<SkCanvas*>(canvas)->drawTextBlob(static_cast<SkTextBlob*>(blob),
-                                               x,
-                                               y,
-                                               *static_cast<SkPaint*>(paint));
+  static_cast<SkCanvas*>(canvas)->drawTextBlob(
+    static_cast<SkTextBlob*>(blob),
+    x,
+    y,
+    *static_cast<SkPaint*>(paint));
 }
 
 // Path (extended)
@@ -866,13 +952,14 @@ void Path_quadTo(void* path, float x1, float y1, float x2, float y2) {
   static_cast<SkPathBuilder*>(path)->quadTo(x1, y1, x2, y2);
 }
 
-void Path_cubicTo(void* path,
-                  float x1,
-                  float y1,
-                  float x2,
-                  float y2,
-                  float x3,
-                  float y3) {
+void Path_cubicTo(
+  void* path,
+  float x1,
+  float y1,
+  float x2,
+  float y2,
+  float x3,
+  float y3) {
   static_cast<SkPathBuilder*>(path)->cubicTo(x1, y1, x2, y2, x3, y3);
 }
 
@@ -883,6 +970,81 @@ void Path_addRect(void* path, float left, float top, float right, float bottom) 
 
 void Path_addCircle(void* path, float cx, float cy, float r) {
   static_cast<SkPathBuilder*>(path)->addCircle(cx, cy, r);
+}
+
+void Path_addOval(void* path, float left, float top, float right, float bottom, int dir, int startIndex) {
+  if (!path) {
+    return;
+  }
+  const SkRect oval = SkRect::MakeLTRB(left, top, right, bottom);
+  static_cast<SkPathBuilder*>(path)->addOval(oval, static_cast<SkPathDirection>(dir), startIndex);
+}
+
+void Path_addRRectXY(
+  void* path,
+  float left,
+  float top,
+  float right,
+  float bottom,
+  float rx,
+  float ry,
+  int dir,
+  int startIndex) {
+  if (!path) {
+    return;
+  }
+  const SkRect rect = SkRect::MakeLTRB(left, top, right, bottom);
+  SkRRect rr;
+  rr.setRectXY(rect, rx, ry);
+  static_cast<SkPathBuilder*>(path)->addRRect(rr, static_cast<SkPathDirection>(dir), startIndex);
+}
+
+void Path_addPolygon(void* path, const float* pointsXY, int pointCount, int close) {
+  if (!path || !pointsXY || pointCount <= 0) {
+    return;
+  }
+
+  std::vector<SkPoint> pts;
+  pts.reserve(static_cast<size_t>(pointCount));
+  for (int i = 0; i < pointCount; i++) {
+    const float x = pointsXY[i * 2 + 0];
+    const float y = pointsXY[i * 2 + 1];
+    pts.push_back(SkPoint::Make(x, y));
+  }
+
+  static_cast<SkPathBuilder*>(path)->addPolygon(
+      SkSpan<const SkPoint>(pts.data(), pts.size()), close != 0);
+}
+
+void Path_addArc(
+  void* path,
+  float left,
+  float top,
+  float right,
+  float bottom,
+  float startAngleDeg,
+  float sweepAngleDeg) {
+  if (!path) {
+    return;
+  }
+  const SkRect oval = SkRect::MakeLTRB(left, top, right, bottom);
+  static_cast<SkPathBuilder*>(path)->addArc(oval, startAngleDeg, sweepAngleDeg);
+}
+
+void Path_arcToOval(
+  void* path,
+  float left,
+  float top,
+  float right,
+  float bottom,
+  float startAngleDeg,
+  float sweepAngleDeg,
+  int forceMoveTo) {
+  if (!path) {
+    return;
+  }
+  const SkRect oval = SkRect::MakeLTRB(left, top, right, bottom);
+  static_cast<SkPathBuilder*>(path)->arcTo(oval, startAngleDeg, sweepAngleDeg, forceMoveTo != 0);
 }
 
 // Snapshot PathBuilder to an SkPath*. Caller must DeleteSkPath().

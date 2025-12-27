@@ -1,5 +1,5 @@
+import { Rect } from 'bindings'
 import { Alignment } from './Alignment'
-import { Rect } from './Geometry'
 
 export enum ImageRepeat {
   NoRepeat = 'noRepeat',

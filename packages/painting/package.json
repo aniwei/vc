@@ -111,6 +111,8 @@
   "packageManager": "pnpm@10.22.0",
   "devDependencies": {
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "bindings": "workspace:*"
   }
 }
-
