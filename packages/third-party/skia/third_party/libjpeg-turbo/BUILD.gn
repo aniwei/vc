@@ -1,0 +1,131 @@
+# Copyright 2016 Google Inc.
+#
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("../third_party.gni")
+
+declare_args() {
+  skia_use_system_libjpeg_turbo = false
+  skia_system_libjpeg_turbo_include_path = "/usr/include"
+  skia_system_libjpeg_turbo_lib = "jpeg"
+}
+
+if (skia_use_system_libjpeg_turbo) {
+  system("libjpeg") {
+    include_dirs = [ skia_system_libjpeg_turbo_include_path ]
+    libs = [ skia_system_libjpeg_turbo_lib ]
+  }
+} else {
+  # libjpeg-turbo supports runtime-selectable precision.
+  # We follow the same split as Chromium's build:
+  # - libjpeg16: BITS_IN_JSAMPLE=16
+  # - libjpeg12: BITS_IN_JSAMPLE=12
+  # - libjpeg:   default 8-bit + core codec glue
+
+  _public_include_dirs = [ "../externals/libjpeg-turbo/src" ]
+  _public_defines = [ "MANGLE_JPEG_NAMES" ]
+
+  _libjpeg16_sources = [
+    "../externals/libjpeg-turbo/src/jcapistd.c",
+    "../externals/libjpeg-turbo/src/jccolor.c",
+    "../externals/libjpeg-turbo/src/jcdiffct.c",
+    "../externals/libjpeg-turbo/src/jclossls.c",
+    "../externals/libjpeg-turbo/src/jcmainct.c",
+    "../externals/libjpeg-turbo/src/jcprepct.c",
+    "../externals/libjpeg-turbo/src/jcsample.c",
+    "../externals/libjpeg-turbo/src/jdapistd.c",
+    "../externals/libjpeg-turbo/src/jdcolor.c",
+    "../externals/libjpeg-turbo/src/jddiffct.c",
+    "../externals/libjpeg-turbo/src/jdlossls.c",
+    "../externals/libjpeg-turbo/src/jdmainct.c",
+    "../externals/libjpeg-turbo/src/jdpostct.c",
+    "../externals/libjpeg-turbo/src/jdsample.c",
+    "../externals/libjpeg-turbo/src/jutils.c",
+  ]
+
+  _libjpeg12_sources = _libjpeg16_sources + [
+    "../externals/libjpeg-turbo/src/jccoefct.c",
+    "../externals/libjpeg-turbo/src/jcdctmgr.c",
+    "../externals/libjpeg-turbo/src/jdcoefct.c",
+    "../externals/libjpeg-turbo/src/jddctmgr.c",
+    "../externals/libjpeg-turbo/src/jdmerge.c",
+    "../externals/libjpeg-turbo/src/jfdctfst.c",
+    "../externals/libjpeg-turbo/src/jfdctint.c",
+    "../externals/libjpeg-turbo/src/jidctflt.c",
+    "../externals/libjpeg-turbo/src/jidctfst.c",
+    "../externals/libjpeg-turbo/src/jidctint.c",
+    "../externals/libjpeg-turbo/src/jidctred.c",
+    "../externals/libjpeg-turbo/src/jquant1.c",
+    "../externals/libjpeg-turbo/src/jquant2.c",
+  ]
+
+  _libjpeg_sources = _libjpeg12_sources + [
+    "../externals/libjpeg-turbo/src/jcapimin.c",
+    "../externals/libjpeg-turbo/src/jchuff.c",
+    "../externals/libjpeg-turbo/src/jcicc.c",
+    "../externals/libjpeg-turbo/src/jcinit.c",
+    "../externals/libjpeg-turbo/src/jclhuff.c",
+    "../externals/libjpeg-turbo/src/jcmarker.c",
+    "../externals/libjpeg-turbo/src/jcmaster.c",
+    "../externals/libjpeg-turbo/src/jcomapi.c",
+    "../externals/libjpeg-turbo/src/jcparam.c",
+    "../externals/libjpeg-turbo/src/jcphuff.c",
+    "../externals/libjpeg-turbo/src/jctrans.c",
+    "../externals/libjpeg-turbo/src/jdapimin.c",
+    "../externals/libjpeg-turbo/src/jdatadst.c",
+    "../externals/libjpeg-turbo/src/jdatasrc.c",
+    "../externals/libjpeg-turbo/src/jdhuff.c",
+    "../externals/libjpeg-turbo/src/jdicc.c",
+    "../externals/libjpeg-turbo/src/jdinput.c",
+    "../externals/libjpeg-turbo/src/jdlhuff.c",
+    "../externals/libjpeg-turbo/src/jdmarker.c",
+    "../externals/libjpeg-turbo/src/jdmaster.c",
+    "../externals/libjpeg-turbo/src/jdphuff.c",
+    "../externals/libjpeg-turbo/src/jdtrans.c",
+    "../externals/libjpeg-turbo/src/jerror.c",
+    "../externals/libjpeg-turbo/src/jfdctflt.c",
+    "../externals/libjpeg-turbo/src/jmemmgr.c",
+    "../externals/libjpeg-turbo/src/jmemnobs.c",
+    "../externals/libjpeg-turbo/src/jpeg_nbits.c",
+  ]
+
+  third_party("libjpeg16") {
+    public_include_dirs = _public_include_dirs
+    public_defines = _public_defines
+
+    sources = _libjpeg16_sources
+    defines = [
+      "NO_GETENV",
+      "NO_PUTENV",
+      "BITS_IN_JSAMPLE=16",
+    ]
+  }
+
+  third_party("libjpeg12") {
+    public_include_dirs = _public_include_dirs
+    public_defines = _public_defines
+
+    sources = _libjpeg12_sources
+    defines = [
+      "NO_GETENV",
+      "NO_PUTENV",
+      "BITS_IN_JSAMPLE=12",
+    ]
+  }
+
+  third_party("libjpeg") {
+    public_include_dirs = _public_include_dirs
+    public_defines = _public_defines
+
+    sources = _libjpeg_sources
+    deps = [
+      ":libjpeg12",
+      ":libjpeg16",
+    ]
+    defines = [
+      "NO_GETENV",
+      "NO_PUTENV",
+    ]
+  }
+}

@@ -1,8 +1,0 @@
-export const symbolStruct = Symbol('Struct')
-export const symbolStructLength = Symbol('StructLength')
-export const symbolStructMaxBaseTypeByteLength = Symbol('StructMaxBaseTypeByteLength')
-export const symbolStructAddress = Symbol('StructAddress')
-export const symbolStructKeysQueue = Symbol('StructKeysQueue')
-export const symbolStructKeysMeta = Symbol('StructKeysMeta')
-export const symbolStructKeysInstance = Symbol('StructKeysInstance')
-export const symbolStructProxyRevoke = Symbol('StructProxyRevoke')

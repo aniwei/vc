@@ -1,0 +1,8 @@
+{
+  "name": "vc-tools-esbuild",
+  "private": true,
+  "type": "commonjs",
+  "dependencies": {
+    "esbuild": "0.25.0"
+  }
+}

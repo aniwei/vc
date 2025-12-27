@@ -1,0 +1,116 @@
+{
+  "name": "painting",
+  "version": "1.0.0",
+  "description": "TypeScript painting utilities (inspired by aniwei/at)",
+  "main": "dist/Index.js",
+  "types": "dist/Index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/Index.d.ts",
+      "default": "./dist/Index.js"
+    },
+    "./Alignment": {
+      "types": "./dist/Alignment.d.ts",
+      "default": "./dist/Alignment.js"
+    },
+    "./Basic": {
+      "types": "./dist/Basic.d.ts",
+      "default": "./dist/Basic.js"
+    },
+    "./Border": {
+      "types": "./dist/Border.d.ts",
+      "default": "./dist/Border.js"
+    },
+    "./BorderRadius": {
+      "types": "./dist/BorderRadius.d.ts",
+      "default": "./dist/BorderRadius.js"
+    },
+    "./BoxBorder": {
+      "types": "./dist/BoxBorder.d.ts",
+      "default": "./dist/BoxBorder.js"
+    },
+    "./BoxDecoration": {
+      "types": "./dist/BoxDecoration.d.ts",
+      "default": "./dist/BoxDecoration.js"
+    },
+    "./BoxFit": {
+      "types": "./dist/BoxFit.d.ts",
+      "default": "./dist/BoxFit.js"
+    },
+    "./BoxShadow": {
+      "types": "./dist/BoxShadow.d.ts",
+      "default": "./dist/BoxShadow.js"
+    },
+    "./DecorationImage": {
+      "types": "./dist/DecorationImage.d.ts",
+      "default": "./dist/DecorationImage.js"
+    },
+    "./EdgeInsets": {
+      "types": "./dist/EdgeInsets.d.ts",
+      "default": "./dist/EdgeInsets.js"
+    },
+    "./Geometry": {
+      "types": "./dist/Geometry.d.ts",
+      "default": "./dist/Geometry.js"
+    },
+    "./Gradient": {
+      "types": "./dist/Gradient.d.ts",
+      "default": "./dist/Gradient.js"
+    },
+    "./ImageCache": {
+      "types": "./dist/ImageCache.d.ts",
+      "default": "./dist/ImageCache.js"
+    },
+    "./ImageProvider": {
+      "types": "./dist/ImageProvider.d.ts",
+      "default": "./dist/ImageProvider.js"
+    },
+    "./ImageStream": {
+      "types": "./dist/ImageStream.d.ts",
+      "default": "./dist/ImageStream.js"
+    },
+    "./InlineSpan": {
+      "types": "./dist/InlineSpan.d.ts",
+      "default": "./dist/InlineSpan.js"
+    },
+    "./Painting": {
+      "types": "./dist/Painting.d.ts",
+      "default": "./dist/Painting.js"
+    },
+    "./Shadow": {
+      "types": "./dist/Shadow.d.ts",
+      "default": "./dist/Shadow.js"
+    },
+    "./TextPainter": {
+      "types": "./dist/TextPainter.d.ts",
+      "default": "./dist/TextPainter.js"
+    },
+    "./TextSpan": {
+      "types": "./dist/TextSpan.d.ts",
+      "default": "./dist/TextSpan.js"
+    },
+    "./TextStyle": {
+      "types": "./dist/TextStyle.d.ts",
+      "default": "./dist/TextStyle.js"
+    },
+    "./Transform": {
+      "types": "./dist/Transform.d.ts",
+      "default": "./dist/Transform.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "pnpm run clean && tsc -p tsconfig.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.22.0",
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
+

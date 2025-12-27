@@ -1,0 +1,47 @@
+# Copyright 2016 Google Inc.
+#
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("../third_party.gni")
+
+declare_args() {
+  skia_use_system_libpng = false
+  skia_system_libpng_include_path = "/usr/include"
+  skia_system_libpng_lib = "png"
+}
+
+if (skia_use_system_libpng) {
+  system("libpng") {
+    include_dirs = [ skia_system_libpng_include_path ]
+    libs = [ skia_system_libpng_lib ]
+  }
+} else {
+  third_party("libpng") {
+    public_include_dirs = [
+      ".",
+      "../externals/libpng",
+    ]
+
+    deps = [ "//third_party/zlib" ]
+
+    sources = [
+      "../externals/libpng/png.c",
+      "../externals/libpng/pngerror.c",
+      "../externals/libpng/pngget.c",
+      "../externals/libpng/pngmem.c",
+      "../externals/libpng/pngpread.c",
+      "../externals/libpng/pngread.c",
+      "../externals/libpng/pngrio.c",
+      "../externals/libpng/pngrtran.c",
+      "../externals/libpng/pngrutil.c",
+      "../externals/libpng/pngset.c",
+      "../externals/libpng/pngtrans.c",
+      "../externals/libpng/pngwio.c",
+      "../externals/libpng/pngwrite.c",
+      "../externals/libpng/pngwtran.c",
+      "../externals/libpng/pngwutil.c",
+      "pnglibconf.h",
+    ]
+  }
+}

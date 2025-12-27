@@ -1,0 +1,154 @@
+{
+  "name": "ui",
+  "version": "1.0.0",
+  "description": "TypeScript ui primitives (inspired by aniwei/at)",
+  "main": "dist/Index.js",
+  "types": "dist/Index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/Index.d.ts",
+      "default": "./dist/Index.js"
+    },
+    "./BackdropBox": {
+      "types": "./dist/BackdropBox.d.ts",
+      "default": "./dist/BackdropBox.js"
+    },
+    "./Box": {
+      "types": "./dist/Box.d.ts",
+      "default": "./dist/Box.js"
+    },
+    "./BoxHitTest": {
+      "types": "./dist/BoxHitTest.d.ts",
+      "default": "./dist/BoxHitTest.js"
+    },
+    "./ClipContext": {
+      "types": "./dist/ClipContext.d.ts",
+      "default": "./dist/ClipContext.js"
+    },
+    "./CheapBindingsCanvas": {
+      "types": "./dist/CheapBindingsCanvas.d.ts",
+      "default": "./dist/CheapBindingsCanvas.js"
+    },
+    "./Constraints": {
+      "types": "./dist/Constraints.d.ts",
+      "default": "./dist/Constraints.js"
+    },
+    "./Container": {
+      "types": "./dist/Container.d.ts",
+      "default": "./dist/Container.js"
+    },
+    "./CustomBox": {
+      "types": "./dist/CustomBox.d.ts",
+      "default": "./dist/CustomBox.js"
+    },
+    "./DecoratedBox": {
+      "types": "./dist/DecoratedBox.d.ts",
+      "default": "./dist/DecoratedBox.js"
+    },
+    "./DetectorBox": {
+      "types": "./dist/DetectorBox.d.ts",
+      "default": "./dist/DetectorBox.js"
+    },
+    "./DragBox": {
+      "types": "./dist/DragBox.d.ts",
+      "default": "./dist/DragBox.js"
+    },
+    "./Flex": {
+      "types": "./dist/Flex.d.ts",
+      "default": "./dist/Flex.js"
+    },
+    "./Flexible": {
+      "types": "./dist/Flexible.d.ts",
+      "default": "./dist/Flexible.js"
+    },
+    "./Image": {
+      "types": "./dist/Image.d.ts",
+      "default": "./dist/Image.js"
+    },
+    "./MouseRegionBox": {
+      "types": "./dist/MouseRegionBox.d.ts",
+      "default": "./dist/MouseRegionBox.js"
+    },
+    "./Object": {
+      "types": "./dist/Object.d.ts",
+      "default": "./dist/Object.js"
+    },
+    "./OpacityBox": {
+      "types": "./dist/OpacityBox.d.ts",
+      "default": "./dist/OpacityBox.js"
+    },
+    "./PaintingContext": {
+      "types": "./dist/PaintingContext.d.ts",
+      "default": "./dist/PaintingContext.js"
+    },
+    "./Paragraph": {
+      "types": "./dist/Paragraph.d.ts",
+      "default": "./dist/Paragraph.js"
+    },
+    "./ParagraphEditable": {
+      "types": "./dist/ParagraphEditable.d.ts",
+      "default": "./dist/ParagraphEditable.js"
+    },
+    "./ParagraphProxy": {
+      "types": "./dist/ParagraphProxy.d.ts",
+      "default": "./dist/ParagraphProxy.js"
+    },
+    "./ParagraphPainter": {
+      "types": "./dist/ParagraphPainter.d.ts",
+      "default": "./dist/ParagraphPainter.js"
+    },
+    "./PipelineOwner": {
+      "types": "./dist/PipelineOwner.d.ts",
+      "default": "./dist/PipelineOwner.js"
+    },
+    "./RepaintBox": {
+      "types": "./dist/RepaintBox.d.ts",
+      "default": "./dist/RepaintBox.js"
+    },
+    "./RotatedBox": {
+      "types": "./dist/RotatedBox.d.ts",
+      "default": "./dist/RotatedBox.js"
+    },
+    "./StackBox": {
+      "types": "./dist/StackBox.d.ts",
+      "default": "./dist/StackBox.js"
+    },
+    "./TapAndDragBox": {
+      "types": "./dist/TapAndDragBox.d.ts",
+      "default": "./dist/TapAndDragBox.js"
+    },
+    "./TapBox": {
+      "types": "./dist/TapBox.d.ts",
+      "default": "./dist/TapBox.js"
+    },
+    "./TransformBox": {
+      "types": "./dist/TransformBox.d.ts",
+      "default": "./dist/TransformBox.js"
+    },
+    "./View": {
+      "types": "./dist/View.d.ts",
+      "default": "./dist/View.js"
+    },
+    "./ViewConfiguration": {
+      "types": "./dist/ViewConfiguration.d.ts",
+      "default": "./dist/ViewConfiguration.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "pnpm run clean && tsc -p tsconfig.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.22.0",
+  "dependencies": {
+    "painting": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

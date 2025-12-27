@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CanvasKit bindings perf</title>
+  </head>
+  <body>
+    <div id="app">
+      <h1>CanvasKit 性能对比（cheap vs embind）</h1>
+
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap">
+        <label>
+          rect / frame
+          <input id="rectPerFrame" type="number" value="5000" min="100" step="100" />
+        </label>
+        <label>
+          frames
+          <input id="frames" type="number" value="200" min="20" step="10" />
+        </label>
+        <button id="run">Run compare</button>
+      </div>
+
+      <pre id="out" style="white-space:pre-wrap; margin-top:12px;"></pre>
+
+      <canvas id="ck" width="512" height="512" style="border:1px solid #ccc; margin-top:12px;"></canvas>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
