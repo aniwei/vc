@@ -1,7 +1,7 @@
 import type { Ptr } from '../types'
 import { Api } from './Api'
 
-export class Image extends Api {
+export class ImageApi extends Api {
   makeFromEncoded(bytesPtr: Ptr, size: number): Ptr {
     return this.invoke('MakeImageFromEncoded', bytesPtr >>> 0, size | 0)
   }

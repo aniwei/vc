@@ -1,7 +1,7 @@
 import type { Ptr } from '../types'
 import { Api } from './Api'
 
-export class Surface extends Api {
+export class SurfaceApi extends Api {
   makeSw(w: number, h: number): Ptr {
     return this.invoke('MakeSWCanvasSurface', w | 0, h | 0)
   }
@@ -20,6 +20,14 @@ export class Surface extends Api {
 
   flush(surface: Ptr): void {
     this.invoke('Surface_flush', surface)
+  }
+
+  width(surface: Ptr): number {
+    return this.invoke('Surface_width', surface) | 0
+  }
+
+  height(surface: Ptr): number {
+    return this.invoke('Surface_height', surface) | 0
   }
 
   encodeToPng(surface: Ptr): Ptr {
