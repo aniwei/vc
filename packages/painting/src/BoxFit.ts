@@ -1,4 +1,4 @@
-import { Size } from './Geometry'
+import { Size } from 'geometry'
 
 export enum BoxFit {
   Fill = 'fill',
@@ -16,8 +16,8 @@ export interface FittedSizes {
 }
 
 export function applyBoxFit(fit: BoxFit, inputSize: Size, outputSize: Size): FittedSizes {
-  if (inputSize.isEmpty || outputSize.isEmpty) {
-    return { source: Size.create(0, 0), destination: Size.create(0, 0) }
+  if (inputSize.isEmpty() || outputSize.isEmpty()) {
+    return { source: new Size(0, 0), destination: new Size(0, 0) }
   }
 
   switch (fit) {
@@ -25,7 +25,7 @@ export function applyBoxFit(fit: BoxFit, inputSize: Size, outputSize: Size): Fit
       return { source: inputSize, destination: outputSize }
 
     case BoxFit.None: {
-      const destination = Size.create(
+      const destination = new Size(
         Math.min(inputSize.width, outputSize.width),
         Math.min(inputSize.height, outputSize.height),
       )
@@ -47,18 +47,18 @@ export function applyBoxFit(fit: BoxFit, inputSize: Size, outputSize: Size): Fit
       const fitHeight = fit === BoxFit.FitHeight
 
       if (fitWidth || (!fitHeight && (isCover ? outputAspect > inputAspect : outputAspect < inputAspect))) {
-        destination = Size.create(outputSize.width, outputSize.width / inputAspect)
+        destination = new Size(outputSize.width, outputSize.width / inputAspect)
       } else {
-        destination = Size.create(outputSize.height * inputAspect, outputSize.height)
+        destination = new Size(outputSize.height * inputAspect, outputSize.height)
       }
 
       if (isCover) {
         if (destination.width > outputSize.width) {
           const cropWidth = inputSize.height * outputAspect
-          source = Size.create(cropWidth, inputSize.height)
+          source = new Size(cropWidth, inputSize.height)
         } else if (destination.height > outputSize.height) {
           const cropHeight = inputSize.width / outputAspect
-          source = Size.create(inputSize.width, cropHeight)
+          source = new Size(inputSize.width, cropHeight)
         }
         destination = outputSize
       }

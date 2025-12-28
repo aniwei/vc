@@ -67,6 +67,78 @@ int SkPathFillType_InverseEvenOdd() {
   return static_cast<int>(SkPathFillType::kInverseEvenOdd);
 }
 
+int SkPaintStyle_Fill() {
+  return static_cast<int>(SkPaint::Style::kFill_Style);
+}
+
+int SkPaintStyle_Stroke() {
+  return static_cast<int>(SkPaint::Style::kStroke_Style);
+}
+
+int SkPaintStyle_StrokeAndFill() {
+  return static_cast<int>(SkPaint::Style::kStrokeAndFill_Style);
+}
+
+int SkFilterMode_Nearest() {
+  return static_cast<int>(SkFilterMode::kNearest);
+}
+
+int SkFilterMode_Linear() {
+  return static_cast<int>(SkFilterMode::kLinear);
+}
+
+int SkMipmapMode_None() {
+  return static_cast<int>(SkMipmapMode::kNone);
+}
+
+int SkMipmapMode_Nearest() {
+  return static_cast<int>(SkMipmapMode::kNearest);
+}
+
+int SkMipmapMode_Linear() {
+  return static_cast<int>(SkMipmapMode::kLinear);
+}
+
+int SkClipOp_Difference() {
+  return static_cast<int>(SkClipOp::kDifference);
+}
+
+int SkClipOp_Intersect() {
+  return static_cast<int>(SkClipOp::kIntersect);
+}
+
+int SkTextDirection_LTR() {
+  return static_cast<int>(skia::textlayout::TextDirection::kLtr);
+}
+
+int SkTextDirection_RTL() {
+  return static_cast<int>(skia::textlayout::TextDirection::kRtl);
+}
+
+int SkTextAlign_Left() {
+  return static_cast<int>(skia::textlayout::TextAlign::kLeft);
+}
+
+int SkTextAlign_Right() {
+  return static_cast<int>(skia::textlayout::TextAlign::kRight);
+}
+
+int SkTextAlign_Center() {
+  return static_cast<int>(skia::textlayout::TextAlign::kCenter);
+}
+
+int SkTextAlign_Justify() {
+  return static_cast<int>(skia::textlayout::TextAlign::kJustify);
+}
+
+int SkTextAlign_Start() {
+  return static_cast<int>(skia::textlayout::TextAlign::kStart);
+}
+
+int SkTextAlign_End() {
+  return static_cast<int>(skia::textlayout::TextAlign::kEnd);
+}
+
 // Provided by cheap runtime via WebAssemblyRunner imports.
 void* __libc_malloc(size_t size);
 void __libc_free(void* ptr);
@@ -87,6 +159,14 @@ struct CheapParagraph {
   sk_sp<para::FontCollection> fontCollection;
   sk_sp<SkUnicode> unicode;
   std::vector<sk_sp<SkData>> fontDatas;
+};
+
+struct CheapParagraphBuilder {
+  std::unique_ptr<para::ParagraphBuilder> builder;
+  sk_sp<para::FontCollection> fontCollection;
+  sk_sp<SkUnicode> unicode;
+  std::vector<sk_sp<SkData>> fontDatas;
+  SkString family;
 };
 
 sk_sp<SkUnicode> MakeUnicode() {
@@ -918,11 +998,314 @@ void* MakeParagraphFromText(
   return handle.release();
 }
 
+void* MakeParagraphFromTextWithEllipsis(
+  const char* utf8,
+  int byteLength,
+  const void* fontBytes,
+  int fontByteLength,
+  float fontSize,
+  float wrapWidth,
+  uint32_t color,
+  int textAlign,
+  int maxLines,
+  const char* ellipsisUtf8,
+  int ellipsisByteLength) {
+  if (!utf8 || byteLength <= 0) {
+    return nullptr;
+  }
+
+  std::unique_ptr<CheapParagraph> handle = std::make_unique<CheapParagraph>();
+
+  sk_sp<SkFontMgr> fontMgr;
+  if (fontBytes && fontByteLength > 0) {
+    sk_sp<SkData> data = SkData::MakeWithCopy(fontBytes, fontByteLength);
+    handle->fontDatas.push_back(std::move(data));
+    fontMgr = SkFontMgr_New_Custom_Data(
+        SkSpan<sk_sp<SkData>>(handle->fontDatas.data(), handle->fontDatas.size()));
+  }
+  if (!fontMgr) {
+    fontMgr = SkFontMgr::RefEmpty();
+  }
+  if (!fontMgr) {
+    return nullptr;
+  }
+
+  sk_sp<para::FontCollection> fontCollection = sk_make_sp<para::FontCollection>();
+  fontCollection->setDefaultFontManager(fontMgr);
+
+  SkString family;
+  if (fontMgr->countFamilies() > 0) {
+    fontMgr->getFamilyName(0, &family);
+  }
+
+  para::TextStyle ts;
+  ts.setColor(static_cast<SkColor>(color));
+  ts.setFontSize(fontSize);
+  if (!family.isEmpty()) {
+    std::vector<SkString> families;
+    families.push_back(family);
+    ts.setFontFamilies(std::move(families));
+  }
+
+  para::ParagraphStyle ps;
+  ps.setTextStyle(ts);
+  ps.setTextAlign(static_cast<para::TextAlign>(textAlign));
+  if (maxLines > 0) {
+    ps.setMaxLines(static_cast<size_t>(maxLines));
+  }
+  if (ellipsisUtf8 && ellipsisByteLength > 0) {
+    SkString ellipsis(ellipsisUtf8, static_cast<size_t>(ellipsisByteLength));
+    ps.setEllipsis(ellipsis);
+  }
+
+  sk_sp<SkUnicode> unicode = MakeUnicode();
+  if (!unicode) {
+    return nullptr;
+  }
+
+  std::unique_ptr<para::ParagraphBuilder> builder =
+      para::ParagraphBuilder::make(ps, fontCollection, unicode);
+  if (!builder) {
+    return nullptr;
+  }
+
+  builder->pushStyle(ts);
+  builder->addText(utf8, static_cast<size_t>(byteLength));
+  std::unique_ptr<para::Paragraph> paragraph = builder->Build();
+  if (!paragraph) {
+    return nullptr;
+  }
+
+  if (wrapWidth > 0) {
+    paragraph->layout(wrapWidth);
+  }
+
+  handle->paragraph = std::move(paragraph);
+  handle->fontCollection = std::move(fontCollection);
+  handle->unicode = std::move(unicode);
+  return handle.release();
+}
+
+void* MakeParagraphBuilder(
+  const void* fontBytes,
+  int fontByteLength,
+  float fontSize,
+  uint32_t color,
+  int textAlign,
+  int maxLines) {
+  std::unique_ptr<CheapParagraphBuilder> handle = std::make_unique<CheapParagraphBuilder>();
+
+  sk_sp<SkFontMgr> fontMgr;
+  if (fontBytes && fontByteLength > 0) {
+    sk_sp<SkData> data = SkData::MakeWithCopy(fontBytes, fontByteLength);
+    handle->fontDatas.push_back(std::move(data));
+    fontMgr = SkFontMgr_New_Custom_Data(
+        SkSpan<sk_sp<SkData>>(handle->fontDatas.data(), handle->fontDatas.size()));
+  }
+  if (!fontMgr) {
+    fontMgr = SkFontMgr::RefEmpty();
+  }
+  if (!fontMgr) {
+    return nullptr;
+  }
+
+  handle->fontCollection = sk_make_sp<para::FontCollection>();
+  handle->fontCollection->setDefaultFontManager(fontMgr);
+
+  if (fontMgr->countFamilies() > 0) {
+    fontMgr->getFamilyName(0, &handle->family);
+  }
+
+  handle->unicode = MakeUnicode();
+  if (!handle->unicode) {
+    return nullptr;
+  }
+
+  para::TextStyle ts;
+  ts.setColor(static_cast<SkColor>(color));
+  ts.setFontSize(fontSize);
+  if (!handle->family.isEmpty()) {
+    std::vector<SkString> families;
+    families.push_back(handle->family);
+    ts.setFontFamilies(std::move(families));
+  }
+
+  para::ParagraphStyle ps;
+  ps.setTextStyle(ts);
+  ps.setTextAlign(static_cast<para::TextAlign>(textAlign));
+  if (maxLines > 0) {
+    ps.setMaxLines(static_cast<size_t>(maxLines));
+  }
+
+  handle->builder = para::ParagraphBuilder::make(ps, handle->fontCollection, handle->unicode);
+  if (!handle->builder) {
+    return nullptr;
+  }
+
+  // Default/base style
+  handle->builder->pushStyle(ts);
+  return handle.release();
+}
+
+void* MakeParagraphBuilderWithEllipsis(
+  const void* fontBytes,
+  int fontByteLength,
+  float fontSize,
+  uint32_t color,
+  int textAlign,
+  int maxLines,
+  const char* ellipsisUtf8,
+  int ellipsisByteLength) {
+  std::unique_ptr<CheapParagraphBuilder> handle = std::make_unique<CheapParagraphBuilder>();
+
+  sk_sp<SkFontMgr> fontMgr;
+  if (fontBytes && fontByteLength > 0) {
+    sk_sp<SkData> data = SkData::MakeWithCopy(fontBytes, fontByteLength);
+    handle->fontDatas.push_back(std::move(data));
+    fontMgr = SkFontMgr_New_Custom_Data(
+        SkSpan<sk_sp<SkData>>(handle->fontDatas.data(), handle->fontDatas.size()));
+  }
+  if (!fontMgr) {
+    fontMgr = SkFontMgr::RefEmpty();
+  }
+  if (!fontMgr) {
+    return nullptr;
+  }
+
+  handle->fontCollection = sk_make_sp<para::FontCollection>();
+  handle->fontCollection->setDefaultFontManager(fontMgr);
+
+  if (fontMgr->countFamilies() > 0) {
+    fontMgr->getFamilyName(0, &handle->family);
+  }
+
+  handle->unicode = MakeUnicode();
+  if (!handle->unicode) {
+    return nullptr;
+  }
+
+  para::TextStyle ts;
+  ts.setColor(static_cast<SkColor>(color));
+  ts.setFontSize(fontSize);
+  if (!handle->family.isEmpty()) {
+    std::vector<SkString> families;
+    families.push_back(handle->family);
+    ts.setFontFamilies(std::move(families));
+  }
+
+  para::ParagraphStyle ps;
+  ps.setTextStyle(ts);
+  ps.setTextAlign(static_cast<para::TextAlign>(textAlign));
+  if (maxLines > 0) {
+    ps.setMaxLines(static_cast<size_t>(maxLines));
+  }
+  if (ellipsisUtf8 && ellipsisByteLength > 0) {
+    SkString ellipsis(ellipsisUtf8, static_cast<size_t>(ellipsisByteLength));
+    ps.setEllipsis(ellipsis);
+  }
+
+  handle->builder = para::ParagraphBuilder::make(ps, handle->fontCollection, handle->unicode);
+  if (!handle->builder) {
+    return nullptr;
+  }
+
+  handle->builder->pushStyle(ts);
+  return handle.release();
+}
+
+void ParagraphBuilder_pushStyle(void* builder, float fontSize, uint32_t color) {
+  if (!builder) return;
+  auto* b = static_cast<CheapParagraphBuilder*>(builder);
+  if (!b->builder) return;
+
+  para::TextStyle ts;
+  ts.setColor(static_cast<SkColor>(color));
+  ts.setFontSize(fontSize);
+  if (!b->family.isEmpty()) {
+    std::vector<SkString> families;
+    families.push_back(b->family);
+    ts.setFontFamilies(std::move(families));
+  }
+  b->builder->pushStyle(ts);
+}
+
+void ParagraphBuilder_pop(void* builder) {
+  if (!builder) return;
+  auto* b = static_cast<CheapParagraphBuilder*>(builder);
+  if (!b->builder) return;
+  b->builder->pop();
+}
+
+void ParagraphBuilder_addText(void* builder, const char* utf8, int byteLength) {
+  if (!builder || !utf8 || byteLength <= 0) return;
+  auto* b = static_cast<CheapParagraphBuilder*>(builder);
+  if (!b->builder) return;
+  b->builder->addText(utf8, static_cast<size_t>(byteLength));
+}
+
+void* ParagraphBuilder_build(void* builder, float wrapWidth) {
+  if (!builder) return nullptr;
+  std::unique_ptr<CheapParagraphBuilder> b(static_cast<CheapParagraphBuilder*>(builder));
+  if (!b->builder) return nullptr;
+
+  std::unique_ptr<para::Paragraph> paragraph = b->builder->Build();
+  if (!paragraph) return nullptr;
+  if (wrapWidth > 0) {
+    paragraph->layout(wrapWidth);
+  }
+
+  std::unique_ptr<CheapParagraph> handle = std::make_unique<CheapParagraph>();
+  handle->paragraph = std::move(paragraph);
+  handle->fontCollection = std::move(b->fontCollection);
+  handle->unicode = std::move(b->unicode);
+  handle->fontDatas = std::move(b->fontDatas);
+  return handle.release();
+}
+
+void DeleteParagraphBuilder(void* builder) {
+  delete static_cast<CheapParagraphBuilder*>(builder);
+}
+
 void Paragraph_layout(void* paragraph, float width) {
   if (!paragraph) return;
   auto* p = static_cast<CheapParagraph*>(paragraph);
   if (!p->paragraph) return;
   p->paragraph->layout(width);
+}
+
+float Paragraph_getHeight(void* paragraph) {
+  if (!paragraph) return 0.0f;
+  auto* p = static_cast<CheapParagraph*>(paragraph);
+  if (!p->paragraph) return 0.0f;
+  return p->paragraph->getHeight();
+}
+
+float Paragraph_getMaxWidth(void* paragraph) {
+  if (!paragraph) return 0.0f;
+  auto* p = static_cast<CheapParagraph*>(paragraph);
+  if (!p->paragraph) return 0.0f;
+  return p->paragraph->getMaxWidth();
+}
+
+float Paragraph_getMinIntrinsicWidth(void* paragraph) {
+  if (!paragraph) return 0.0f;
+  auto* p = static_cast<CheapParagraph*>(paragraph);
+  if (!p->paragraph) return 0.0f;
+  return p->paragraph->getMinIntrinsicWidth();
+}
+
+float Paragraph_getMaxIntrinsicWidth(void* paragraph) {
+  if (!paragraph) return 0.0f;
+  auto* p = static_cast<CheapParagraph*>(paragraph);
+  if (!p->paragraph) return 0.0f;
+  return p->paragraph->getMaxIntrinsicWidth();
+}
+
+float Paragraph_getLongestLine(void* paragraph) {
+  if (!paragraph) return 0.0f;
+  auto* p = static_cast<CheapParagraph*>(paragraph);
+  if (!p->paragraph) return 0.0f;
+  return p->paragraph->getLongestLine();
 }
 
 void Canvas_drawParagraph(void* canvas, void* paragraph, float x, float y) {

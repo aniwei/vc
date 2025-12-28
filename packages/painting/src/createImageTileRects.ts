@@ -1,8 +1,8 @@
-import { Rect } from 'bindings'
+import { Rect } from 'geometry'
 import { ImageRepeat } from './DecorationImage'
 
 export function createImageTileRects(output: Rect, fundamental: Rect, repeat: ImageRepeat): Rect[] {
-  if (repeat === ImageRepeat.NoRepeat || output.isEmpty || fundamental.isEmpty) {
+  if (repeat === ImageRepeat.NoRepeat || output.isEmpty() || fundamental.isEmpty()) {
     return [fundamental]
   }
 

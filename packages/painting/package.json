@@ -2,12 +2,16 @@
   "name": "painting",
   "version": "1.0.0",
   "description": "TypeScript painting utilities (inspired by aniwei/at)",
-  "main": "dist/Index.js",
-  "types": "dist/Index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/Index.d.ts",
-      "default": "./dist/Index.js"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./Index": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./Alignment": {
       "types": "./dist/Alignment.d.ts",
@@ -49,10 +53,10 @@
       "types": "./dist/EdgeInsets.d.ts",
       "default": "./dist/EdgeInsets.js"
     },
-    "./Geometry": {
-      "types": "./dist/Geometry.d.ts",
-      "default": "./dist/Geometry.js"
-    },
+     "./Geometry": {
+       "types": "./dist/Geometry.d.ts",
+       "default": "./dist/Geometry.js"
+     },
     "./Gradient": {
       "types": "./dist/Gradient.d.ts",
       "default": "./dist/Gradient.js"
@@ -74,8 +78,12 @@
       "default": "./dist/InlineSpan.js"
     },
     "./Painting": {
-      "types": "./dist/Painting.d.ts",
-      "default": "./dist/Painting.js"
+      "types": "./dist/painting.d.ts",
+      "default": "./dist/painting.js"
+    },
+    "./painting": {
+      "types": "./dist/painting.d.ts",
+      "default": "./dist/painting.js"
     },
     "./Shadow": {
       "types": "./dist/Shadow.d.ts",
@@ -110,9 +118,13 @@
   "license": "ISC",
   "packageManager": "pnpm@10.22.0",
   "devDependencies": {
+    "invariant": "^2.2.4",
+    "@types/invariant": "^2.2.37",
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "bindings": "workspace:*"
+    "bindings": "workspace:*",
+    "geometry": "workspace:*",
+    "shared": "workspace:*"
   }
 }

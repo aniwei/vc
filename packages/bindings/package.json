@@ -15,9 +15,10 @@
   "packageManager": "pnpm@10.22.0",
   "dependencies": {
     "@libmedia/cheap": "^1.2.0",
-    "tsx": "^4.21.0"
+    "geometry": "workspace:*"
   },
   "devDependencies": {
+    "tsx": "^4.21.0",
     "@types/invariant": "^2.2.37",
     "@types/node": "^20.19.27",
     "invariant": "^2.2.4",

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@libmedia/cheap": "^1.2.0",
+    "bindings": "workspace:*",
     "canvaskit-wasm": "^0.40.0"
   },
   "devDependencies": {

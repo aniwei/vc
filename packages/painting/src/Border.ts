@@ -9,5 +9,7 @@ export class BorderSide {
   constructor(
     public readonly width: number = 1,
     public readonly style: BorderStyle = BorderStyle.Solid,
+    // ARGB color, e.g. 0xff000000 for opaque black
+    public readonly color: number = 0xff000000,
   ) {}
 }

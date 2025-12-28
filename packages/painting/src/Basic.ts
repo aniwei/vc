@@ -4,3 +4,5 @@ export interface Padding {
   right: number
   bottom: number
 }
+
+export type VoidCallback = () => void

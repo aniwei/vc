@@ -4,6 +4,9 @@ import { PathApi } from './api/PathApi'
 import { SurfaceApi } from './api/SurfaceApi'
 import { CanvasApi } from './api/CanvasApi'
 import { ImageApi } from './api/ImageApi'
+import { ParagraphApi } from './api/ParagraphApi'
+import { ParagraphBuilderApi } from './api/ParagraphBuilderApi'
+import { ShaderApi } from './api/ShaderApi'
 
 import type { Imports, Ptr } from './types'
 import type { ExportResolver } from './api/Api'
@@ -283,6 +286,9 @@ function makeApi(runner: any) {
     Surface: new SurfaceApi(resolver),
     Canvas: new CanvasApi(resolver),
     Image: new ImageApi(resolver),
+    Paragraph: new ParagraphApi(resolver),
+    ParagraphBuilder: new ParagraphBuilderApi(resolver),
+    Shader: new ShaderApi(resolver),
     
     Memory: MemoryRef,
   }
@@ -381,6 +387,21 @@ export class CanvasKitApi {
   static get Image () {
     invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
     return this.#api.Image
+  }
+
+  static get Paragraph () {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return this.#api.Paragraph
+  }
+
+  static get ParagraphBuilder () {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return this.#api.ParagraphBuilder
+  }
+
+  static get Shader () {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return this.#api.Shader
   }
 
   static get Memory () {

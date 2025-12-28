@@ -1,8 +1,246 @@
 import CanvasKitInit from 'canvaskit-wasm/full'
 import canvaskitWasmUrl from 'canvaskit-wasm/bin/full/canvaskit.wasm?url'
 
-// Import the workspace bindings source directly (not the built CJS dist)
-import { createCanvasKit } from '../../bindings/src/CanvasKit'
+import { CanvasKitApi } from '../../bindings/src/CanvasKitApi'
+
+async function createCanvasKit(options: { wasmPath: string }) {
+  await CanvasKitApi.ready({ uri: options.wasmPath })
+
+  return {
+    // memory
+    malloc(size: number): number {
+      return CanvasKitApi.malloc(size) as unknown as number
+    },
+
+    free(ptr: number): void {
+      CanvasKitApi.free(ptr >>> 0)
+    },
+
+    allocBytes(bytes: Uint8Array): number {
+      return CanvasKitApi.alloc(bytes) as unknown as number
+    },
+
+    // Surface
+    makeSwCanvasSurface(w: number, h: number): number {
+      return CanvasKitApi.Surface.makeSw(w | 0, h | 0) as unknown as number
+    },
+
+    deleteSurface(surface: number): void {
+      CanvasKitApi.Surface.delete(surface >>> 0)
+    },
+
+    surfaceGetCanvas(surface: number): number {
+      return CanvasKitApi.Surface.getCanvas(surface >>> 0) as unknown as number
+    },
+
+    surfaceFlush(surface: number): void {
+      CanvasKitApi.Surface.flush(surface >>> 0)
+    },
+
+    // Paint
+    makePaint(): number {
+      return CanvasKitApi.Paint.make() as unknown as number
+    },
+
+    deletePaint(paint: number): void {
+      CanvasKitApi.Paint.delete(paint >>> 0)
+    },
+
+    paintSetAntiAlias(paint: number, aa: boolean): void {
+      CanvasKitApi.Paint.setAntiAlias(paint >>> 0, aa)
+    },
+
+    paintSetColor(paint: number, argb: number): void {
+      CanvasKitApi.Paint.setColor(paint >>> 0, argb >>> 0)
+    },
+
+    // Path
+    makePath(): number {
+      return CanvasKitApi.Path.make() as unknown as number
+    },
+
+    deletePath(path: number): void {
+      CanvasKitApi.Path.delete(path >>> 0)
+    },
+
+    pathAddCircle(path: number, cx: number, cy: number, r: number): void {
+      CanvasKitApi.Path.addCircle(path >>> 0, cx, cy, r)
+    },
+
+    pathSnapshot(path: number): number {
+      return CanvasKitApi.Path.snapshot(path >>> 0) as unknown as number
+    },
+
+    deleteSkPath(skPath: number): void {
+      CanvasKitApi.Path.deleteSkPath(skPath >>> 0)
+    },
+
+    // Canvas
+    canvasClear(canvas: number, argb: number): void {
+      CanvasKitApi.Canvas.clear(canvas >>> 0, argb >>> 0)
+    },
+
+    canvasDrawRect(canvas: number, l: number, t: number, r: number, b: number, paint: number): void {
+      CanvasKitApi.Canvas.drawRect(canvas >>> 0, l, t, r, b, paint >>> 0)
+    },
+
+    canvasDrawSkPath(canvas: number, skPath: number, paint: number): void {
+      CanvasKitApi.Canvas.drawSkPath(canvas >>> 0, skPath >>> 0, paint >>> 0)
+    },
+
+    canvasDrawImageRect(
+      canvas: number,
+      image: number,
+      srcL: number,
+      srcT: number,
+      srcR: number,
+      srcB: number,
+      dstL: number,
+      dstT: number,
+      dstR: number,
+      dstB: number,
+      filterMode: number,
+      mipmapMode: number,
+    ): void {
+      CanvasKitApi.Canvas.drawImageRect(
+        canvas >>> 0,
+        image >>> 0,
+        srcL,
+        srcT,
+        srcR,
+        srcB,
+        dstL,
+        dstT,
+        dstR,
+        dstB,
+        filterMode as any,
+        mipmapMode as any,
+      )
+    },
+
+    canvasDrawTextBlob(canvas: number, blob: number, x: number, y: number, paint: number): void {
+      CanvasKitApi.Canvas.drawTextBlob(canvas >>> 0, blob >>> 0, x, y, paint >>> 0)
+    },
+
+    canvasDrawParagraph(canvas: number, paragraph: number, x: number, y: number): void {
+      CanvasKitApi.Canvas.drawParagraph(canvas >>> 0, paragraph >>> 0, x, y)
+    },
+
+    // Image
+    makeImageFromEncodedBytes(bytes: Uint8Array): number {
+      const ptr = CanvasKitApi.alloc(bytes) as unknown as number
+      try {
+        return CanvasKitApi.Image.makeFromEncoded(ptr >>> 0, bytes.length) as unknown as number
+      } finally {
+        CanvasKitApi.free(ptr >>> 0)
+      }
+    },
+
+    deleteImage(image: number): void {
+      CanvasKitApi.Image.delete(image >>> 0)
+    },
+
+    // Font/Typeface/TextBlob (raw invoke)
+    makeTypefaceFromBytes(bytes: Uint8Array, ttcIndex: number): number {
+      const ptr = CanvasKitApi.alloc(bytes) as unknown as number
+      try {
+        return (CanvasKitApi.invoke('MakeTypefaceFromData', ptr >>> 0, bytes.length | 0, ttcIndex | 0) as number) >>> 0
+      } finally {
+        CanvasKitApi.free(ptr >>> 0)
+      }
+    },
+
+    deleteTypeface(typeface: number): void {
+      CanvasKitApi.invoke('DeleteTypeface', typeface >>> 0)
+    },
+
+    makeFont(): number {
+      return (CanvasKitApi.invoke('MakeFont') as number) >>> 0
+    },
+
+    deleteFont(font: number): void {
+      CanvasKitApi.invoke('DeleteFont', font >>> 0)
+    },
+
+    fontSetSize(font: number, size: number): void {
+      CanvasKitApi.invoke('Font_setSize', font >>> 0, +size)
+    },
+
+    fontSetTypeface(font: number, typeface: number): void {
+      CanvasKitApi.invoke('Font_setTypeface', font >>> 0, typeface >>> 0)
+    },
+
+    makeTextBlobFromText(bytesPtr: number, byteLength: number, font: number, encoding: number): number {
+      return (CanvasKitApi.invoke('MakeTextBlobFromText', bytesPtr >>> 0, byteLength | 0, font >>> 0, encoding | 0) as number) >>>
+        0
+    },
+
+    deleteTextBlob(blob: number): void {
+      CanvasKitApi.invoke('DeleteTextBlob', blob >>> 0)
+    },
+
+    // Paragraph
+    makeParagraphFromText(
+      utf8Ptr: number,
+      byteLength: number,
+      fontBytesPtr: number,
+      fontByteLength: number,
+      fontSize: number,
+      wrapWidth: number,
+      color: number,
+      textAlign: number,
+      maxLines: number,
+    ): number {
+      return CanvasKitApi.Paragraph.makeFromText(
+        utf8Ptr >>> 0,
+        byteLength | 0,
+        fontBytesPtr >>> 0,
+        fontByteLength | 0,
+        +fontSize,
+        +wrapWidth,
+        color >>> 0,
+        textAlign as any,
+        maxLines | 0,
+      ) as unknown as number
+    },
+
+    makeParagraphFromTextWithEllipsis(
+      utf8Ptr: number,
+      byteLength: number,
+      fontBytesPtr: number,
+      fontByteLength: number,
+      fontSize: number,
+      wrapWidth: number,
+      color: number,
+      textAlign: number,
+      maxLines: number,
+      ellipsisUtf8Ptr: number,
+      ellipsisByteLength: number,
+    ): number {
+      return CanvasKitApi.Paragraph.makeFromTextWithEllipsis(
+        utf8Ptr >>> 0,
+        byteLength | 0,
+        fontBytesPtr >>> 0,
+        fontByteLength | 0,
+        +fontSize,
+        +wrapWidth,
+        color >>> 0,
+        textAlign as any,
+        maxLines | 0,
+        ellipsisUtf8Ptr >>> 0,
+        ellipsisByteLength | 0,
+      ) as unknown as number
+    },
+
+    paragraphLayout(paragraph: number, width: number): void {
+      CanvasKitApi.Paragraph.layout(paragraph >>> 0, +width)
+    },
+
+    deleteParagraph(paragraph: number): void {
+      CanvasKitApi.Paragraph.delete(paragraph >>> 0)
+    },
+  }
+}
 
 type Row = { name: string; n: number; ms: number; nsPerOp: number }
 
@@ -345,6 +583,84 @@ function compare(cheap: BenchResult, embind: BenchResult) {
   return lines.join('\n')
 }
 
+async function renderEllipsisDemo(canvasEl: HTMLCanvasElement): Promise<void> {
+  const ck = await createCanvasKit({ wasmPath: '/cheap/canvaskit.wasm' })
+
+  const W = canvasEl.width
+  const H = canvasEl.height
+  const surface = ck.makeSwCanvasSurface(W, H)
+  const canvas = ck.surfaceGetCanvas(surface)
+
+  const paint = ck.makePaint()
+  ck.paintSetAntiAlias(paint, true)
+
+  const fontBytes = await fetchBytes('/fonts/NotoMono-Regular.ttf')
+  const fontPtr = ck.allocBytes(fontBytes)
+
+  const wrapWidth = Math.max(120, W - 20)
+  const text =
+    'ellipsis demo: The quick brown fox jumps over the lazy dog. 0123456789.'
+
+  const textBytes = new TextEncoder().encode(text)
+  const textPtr = ck.allocBytes(textBytes)
+
+  const ellipsisBytes = new TextEncoder().encode('…')
+  const ellipsisPtr = ck.allocBytes(ellipsisBytes)
+
+  try {
+    const noEllipsis = ck.makeParagraphFromText(
+      textPtr,
+      textBytes.length,
+      fontPtr,
+      fontBytes.length,
+      28,
+      wrapWidth,
+      0xffeeeeee,
+      0,
+      1,
+    )
+
+    const withEllipsis = ck.makeParagraphFromTextWithEllipsis(
+      textPtr,
+      textBytes.length,
+      fontPtr,
+      fontBytes.length,
+      28,
+      wrapWidth,
+      0xffeeeeee,
+      0,
+      1,
+      ellipsisPtr,
+      ellipsisBytes.length,
+    )
+
+    if (!noEllipsis) throw new Error('cheap: MakeParagraphFromText (demo) returned null')
+    if (!withEllipsis) throw new Error('cheap: MakeParagraphFromTextWithEllipsis (demo) returned null')
+
+    ck.paragraphLayout(noEllipsis, wrapWidth)
+    ck.paragraphLayout(withEllipsis, wrapWidth)
+
+    ck.canvasClear(canvas, 0xff000000)
+
+    ck.paintSetColor(paint, 0xff222222)
+    ck.canvasDrawRect(canvas, 10, 10, 10 + wrapWidth, 10 + 40, paint)
+    ck.canvasDrawRect(canvas, 10, 70, 10 + wrapWidth, 70 + 40, paint)
+
+    ck.canvasDrawParagraph(canvas, noEllipsis, 12, 12)
+    ck.canvasDrawParagraph(canvas, withEllipsis, 12, 72)
+    ck.surfaceFlush(surface)
+
+    ck.deleteParagraph(noEllipsis)
+    ck.deleteParagraph(withEllipsis)
+  } finally {
+    ck.free(textPtr)
+    ck.free(fontPtr)
+    ck.free(ellipsisPtr)
+    ck.deletePaint(paint)
+    ck.deleteSurface(surface)
+  }
+}
+
 async function main() {
   const outEl = document.getElementById('out')!
   const runBtn = document.getElementById('run') as HTMLButtonElement
@@ -373,6 +689,11 @@ async function main() {
 
     log(outEl, '')
     log(outEl, compare(cheap, embind))
+
+    log(outEl, '')
+    log(outEl, 'rendering ellipsis demo (cheap)...')
+    await renderEllipsisDemo(canvasEl)
+    log(outEl, 'ellipsis demo done')
 
     runBtn.disabled = false
   }

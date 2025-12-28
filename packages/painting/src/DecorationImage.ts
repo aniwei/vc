@@ -1,4 +1,4 @@
-import { Rect } from 'bindings'
+import { Rect } from 'geometry'
 import { Alignment } from './Alignment'
 
 export enum ImageRepeat {

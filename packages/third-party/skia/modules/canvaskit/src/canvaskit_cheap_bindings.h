@@ -19,6 +19,30 @@ int SkPathFillType_EvenOdd();
 int SkPathFillType_InverseWinding();
 int SkPathFillType_InverseEvenOdd();
 
+int SkPaintStyle_Fill();
+int SkPaintStyle_Stroke();
+int SkPaintStyle_StrokeAndFill();
+
+int SkFilterMode_Nearest();
+int SkFilterMode_Linear();
+
+int SkMipmapMode_None();
+int SkMipmapMode_Nearest();
+int SkMipmapMode_Linear();
+
+int SkClipOp_Difference();
+int SkClipOp_Intersect();
+
+int SkTextDirection_LTR();
+int SkTextDirection_RTL();
+
+int SkTextAlign_Left();
+int SkTextAlign_Right();
+int SkTextAlign_Center();
+int SkTextAlign_Justify();
+int SkTextAlign_Start();
+int SkTextAlign_End();
+
 // Paint
 void* MakePaint();
 void DeletePaint(void* paint);
@@ -207,7 +231,54 @@ void* MakeParagraphFromText(
   uint32_t color,
   int textAlign,
   int maxLines);
+
+// Same as MakeParagraphFromText, but allows setting ParagraphStyle.ellipsis (UTF-8).
+void* MakeParagraphFromTextWithEllipsis(
+  const char* utf8,
+  int byteLength,
+  const void* fontBytes,
+  int fontByteLength,
+  float fontSize,
+  float wrapWidth,
+  uint32_t color,
+  int textAlign,
+  int maxLines,
+  const char* ellipsisUtf8,
+  int ellipsisByteLength);
+
+// ParagraphBuilder (SkParagraph)
+// Returns an owned builder handle. Call DeleteParagraphBuilder() when done.
+void* MakeParagraphBuilder(
+  const void* fontBytes,
+  int fontByteLength,
+  float fontSize,
+  uint32_t color,
+  int textAlign,
+  int maxLines);
+
+// Same as MakeParagraphBuilder, but allows setting ParagraphStyle.ellipsis (UTF-8).
+void* MakeParagraphBuilderWithEllipsis(
+  const void* fontBytes,
+  int fontByteLength,
+  float fontSize,
+  uint32_t color,
+  int textAlign,
+  int maxLines,
+  const char* ellipsisUtf8,
+  int ellipsisByteLength);
+void ParagraphBuilder_pushStyle(void* builder, float fontSize, uint32_t color);
+void ParagraphBuilder_pop(void* builder);
+void ParagraphBuilder_addText(void* builder, const char* utf8, int byteLength);
+// Builds and returns an owned paragraph handle. The builder is deleted as part of build.
+void* ParagraphBuilder_build(void* builder, float wrapWidth);
+void DeleteParagraphBuilder(void* builder);
+
 void Paragraph_layout(void* paragraph, float width);
+float Paragraph_getHeight(void* paragraph);
+float Paragraph_getMaxWidth(void* paragraph);
+float Paragraph_getMinIntrinsicWidth(void* paragraph);
+float Paragraph_getMaxIntrinsicWidth(void* paragraph);
+float Paragraph_getLongestLine(void* paragraph);
 void DeleteParagraph(void* paragraph);
 void Canvas_drawParagraph(void* canvas, void* paragraph, float x, float y);
 

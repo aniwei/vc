@@ -1,4 +1,4 @@
-import { Size } from './Geometry'
+import { Size } from 'geometry'
 
 export interface ImageConfigurationOptions {
   devicePixelRatio?: number | null
