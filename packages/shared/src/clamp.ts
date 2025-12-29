@@ -1,3 +1,10 @@
+/**
+ * 
+ * @param {number} value 
+ * @param {number} lower 
+ * @param {number} upper 
+ * @returns {number}
+ */
 export function clamp (
   value: number, 
   lower: number, 

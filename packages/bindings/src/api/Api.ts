@@ -16,6 +16,18 @@ export abstract class Api {
     }
     return fn(...args) as T
   }
+
+  maybeInvoke<T = any>(name: string, ...args: any[]): T | null {
+    const fn = this.resolver(name)
+    if (!fn) {
+      return null
+    }
+    return fn(...args) as T
+  }
+
+  hasExport(name: string): boolean {
+    return !!this.resolver(name)
+  }
 }
 
 export type { Ptr }

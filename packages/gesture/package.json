@@ -1,0 +1,30 @@
+{
+  "name": "@at/gesture",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@at/basic": "workspace:*",
+    "@at/engine": "workspace:*",
+    "@at/geometry": "workspace:*",
+    "@at/math": "workspace:*",
+    "@at/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

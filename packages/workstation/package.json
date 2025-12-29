@@ -11,7 +11,8 @@
   "dependencies": {
     "bindings": "workspace:*",
     "ui": "workspace:*",
-    "geometry": "workspace:*"
+    "geometry": "workspace:*",
+    "painting": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.0.0",

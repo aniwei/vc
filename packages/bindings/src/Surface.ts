@@ -30,6 +30,14 @@ export class SurfacePtr extends Ptr {
     return new SurfacePtr(CanvasKitApi.Surface.makeSw(w | 0, h | 0))
   }
 
+  static makeGl(w: number, h: number): SurfacePtr {
+    const ptr = CanvasKitApi.Surface.makeCanvas(w | 0, h | 0)
+    if (!ptr) {
+      throw new Error('MakeCanvasSurface failed (WebGL/GPU surface unavailable)')
+    }
+    return new SurfacePtr(ptr)
+  }
+
   delete(): void {
     if (!this.isDeleted()) {
       CanvasKitApi.Surface.delete(this.ptr)
@@ -107,6 +115,10 @@ export class Surface extends ManagedObj {
 
   static makeSw(w: number, h: number): Surface {
     return new Surface(SurfacePtr.makeSw(w, h))
+  }
+
+  static makeGl(w: number, h: number): Surface {
+    return new Surface(SurfacePtr.makeGl(w, h))
   }
 
   resurrect(): Ptr {

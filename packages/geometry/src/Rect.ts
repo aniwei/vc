@@ -11,6 +11,29 @@ export interface LTRB extends Array<number> {
 export type LTRBRect = [number, number, number, number]
 
 export class Rect {
+  static lerp(a: Rect | null, b: Rect | null, t: number): Rect | null {
+    if (t === null || Number.isNaN(t)) {
+      throw new Error('The argument "t" cannot be null or NaN.')
+    }
+
+    if (b === null) {
+      if (a === null) return null
+      const k = 1.0 - t
+      return Rect.fromLTRB(a.left * k, a.top * k, a.right * k, a.bottom * k)
+    }
+
+    if (a === null) {
+      return Rect.fromLTRB(b.left * t, b.top * t, b.right * t, b.bottom * t)
+    }
+
+    return Rect.fromLTRB(
+      a.left + (b.left - a.left) * t,
+      a.top + (b.top - a.top) * t,
+      a.right + (b.right - a.right) * t,
+      a.bottom + (b.bottom - a.bottom) * t,
+    )
+  }
+
   static fromLTWH(left: number, top: number, width: number, height: number): Rect {
     return new Rect(left, top, left + width, top + height)
   }

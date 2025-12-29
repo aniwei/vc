@@ -12,6 +12,84 @@ importers:
         specifier: ^0.40.0
         version: 0.40.0
 
+  packages/animation:
+    dependencies:
+      '@at/basic':
+        specifier: workspace:*
+        version: link:../at-basic
+      '@at/engine':
+        specifier: workspace:*
+        version: link:../at-engine
+      '@at/geometry':
+        specifier: workspace:*
+        version: link:../at-geometry
+      '@at/utils':
+        specifier: workspace:*
+        version: link:../at-utils
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/at-basic:
+    dependencies:
+      '@at/utils':
+        specifier: workspace:*
+        version: link:../at-utils
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/at-engine:
+    dependencies:
+      '@at/basic':
+        specifier: workspace:*
+        version: link:../at-basic
+      '@at/geometry':
+        specifier: workspace:*
+        version: link:../at-geometry
+      '@at/utils':
+        specifier: workspace:*
+        version: link:../at-utils
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/at-geometry:
+    dependencies:
+      geometry:
+        specifier: workspace:*
+        version: link:../geometry
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/at-math:
+    dependencies:
+      '@at/basic':
+        specifier: workspace:*
+        version: link:../at-basic
+      '@at/utils':
+        specifier: workspace:*
+        version: link:../at-utils
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/at-utils:
+    dependencies:
+      shared:
+        specifier: workspace:*
+        version: link:../shared
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
   packages/bindings:
     dependencies:
       '@libmedia/cheap':
@@ -38,6 +116,28 @@ importers:
         version: 5.9.3
 
   packages/geometry:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/gesture:
+    dependencies:
+      '@at/basic':
+        specifier: workspace:*
+        version: link:../at-basic
+      '@at/engine':
+        specifier: workspace:*
+        version: link:../at-engine
+      '@at/geometry':
+        specifier: workspace:*
+        version: link:../at-geometry
+      '@at/math':
+        specifier: workspace:*
+        version: link:../at-math
+      '@at/utils':
+        specifier: workspace:*
+        version: link:../at-utils
     devDependencies:
       typescript:
         specifier: ^5.0.0
@@ -123,6 +223,9 @@ importers:
       geometry:
         specifier: workspace:*
         version: link:../geometry
+      painting:
+        specifier: workspace:*
+        version: link:../painting
       ui:
         specifier: workspace:*
         version: link:../ui

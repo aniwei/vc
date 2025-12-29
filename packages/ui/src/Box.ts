@@ -1,6 +1,6 @@
 import { Offset, Rect, Size } from 'geometry'
 import { BoxConstraints } from './Constraints'
-import { Obj } from './Obect'
+import { Obj } from './Object'
 import type { PaintingContext } from './PaintingContext'
 import type { BoxHitTestResult } from './BoxHitTest'
 

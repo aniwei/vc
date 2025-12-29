@@ -108,6 +108,7 @@
   },
   "dependencies": {
     "bindings": "workspace:*",
+    "geometry": "workspace:*",
     "shared": "workspace:*"
   }
 }

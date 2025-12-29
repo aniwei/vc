@@ -4,10 +4,50 @@ import { PaintingContext } from './PaintingContext'
 import type { Canvas } from 'bindings'
 import type { Obj } from './Object'
 import type { ViewConfiguration } from './ViewConfiguration'
+import { BoxHitTestResult } from './BoxHitTest'
 
 export class PipelineOwner {
-  rootNode: Obj | null = null
-  configuration: ViewConfiguration | null = null
+  #rootNode: Obj | null = null
+  #configuration: ViewConfiguration | null = null
+
+  get rootNode(): Obj | null {
+    return this.#rootNode
+  }
+
+  set rootNode(node: Obj | null) {
+    this.#rootNode = node
+  }
+
+  get configuration(): ViewConfiguration | null {
+    return this.#configuration
+  }
+
+  set configuration(configuration: ViewConfiguration | null) {
+    this.#configuration = configuration
+  }
+
+  hitTest(position: Offset): BoxHitTestResult {
+    const result = new BoxHitTestResult()
+    const root: any = this.rootNode
+    if (root && typeof root.hitTest === 'function') {
+      root.hitTest(result, position)
+    }
+    return result
+  }
+
+  dispatchTap(position: Offset): boolean {
+    const hit = this.hitTest(position)
+
+    for (const entry of hit.path) {
+      const target: any = entry.target
+      if (typeof target?.onTap === 'function') {
+        target.onTap()
+        return true
+      }
+    }
+
+    return false
+  }
 
   setRoot(node: Obj | null): void {
     if (this.rootNode === node) {
