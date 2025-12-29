@@ -1,10 +1,10 @@
-import { Offset, Rect, Size } from 'painting'
+import { Offset, Rect, Size } from 'geometry'
 import { BoxConstraints } from './Constraints'
-import { RenderObject } from './Object'
+import { Obj } from './Obect'
 import type { PaintingContext } from './PaintingContext'
 import type { BoxHitTestResult } from './BoxHitTest'
 
-export class Box extends RenderObject {
+export class Box extends Obj {
   offset: Offset = Offset.ZERO
   size: Size | null = null
   constraints: BoxConstraints | null = null
@@ -51,7 +51,34 @@ export class Box extends RenderObject {
     this.needsPaint = false
   }
 
-  hitTest(_result: BoxHitTestResult, _position: Offset): boolean {
-    return false
+  hitTest(result: BoxHitTestResult, position: Offset): boolean {
+    const size = this.size
+    if (!size) {
+      return false
+    }
+
+    if (!(size.width > 0 && size.height > 0)) {
+      return false
+    }
+
+    // Local bounds check.
+    if (position.dx < 0 || position.dy < 0 || position.dx > size.width || position.dy > size.height) {
+      return false
+    }
+
+    // Hit test children (top-most first).
+    let child = this.lastChild as Box | null
+    while (child) {
+      const childPos = position.translate(-child.offset.dx, -child.offset.dy)
+      if (child.hitTest(result, childPos)) {
+        result.add(this, position)
+        return true
+      }
+      child = child.previousSibling as Box | null
+    }
+
+    // Hit self.
+    result.add(this, position)
+    return true
   }
 }

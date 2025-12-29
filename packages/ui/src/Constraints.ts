@@ -1,4 +1,4 @@
-import { Size } from 'painting'
+import { Size } from 'geometry'
 
 export interface BoxConstraintsOptions {
   minWidth?: number

@@ -1,4 +1,4 @@
-import { Rect } from 'geometry'
+import { Rect } from 'bindings'
 import { ImageRepeat } from './DecorationImage'
 
 export function createImageTileRects(output: Rect, fundamental: Rect, repeat: ImageRepeat): Rect[] {

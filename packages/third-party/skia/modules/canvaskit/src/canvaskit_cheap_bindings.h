@@ -30,6 +30,11 @@ int SkMipmapMode_None();
 int SkMipmapMode_Nearest();
 int SkMipmapMode_Linear();
 
+int SkTileMode_Clamp();
+int SkTileMode_Repeat();
+int SkTileMode_Mirror();
+int SkTileMode_Decal();
+
 int SkClipOp_Difference();
 int SkClipOp_Intersect();
 

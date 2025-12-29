@@ -1,4 +1,4 @@
-import { Offset } from 'painting'
+import { Offset } from 'geometry'
 import type { Box } from './Box'
 
 export interface BoxHitTestEntry {

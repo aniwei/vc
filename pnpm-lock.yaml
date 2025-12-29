@@ -76,6 +76,12 @@ importers:
       canvaskit-wasm:
         specifier: ^0.40.0
         version: 0.40.0
+      geometry:
+        specifier: workspace:*
+        version: link:../geometry
+      ui:
+        specifier: workspace:*
+        version: link:../ui
     devDependencies:
       typescript:
         specifier: ^5.0.0
@@ -95,6 +101,12 @@ importers:
 
   packages/ui:
     dependencies:
+      bindings:
+        specifier: workspace:*
+        version: link:../bindings
+      geometry:
+        specifier: workspace:*
+        version: link:../geometry
       painting:
         specifier: workspace:*
         version: link:../painting
@@ -102,6 +114,25 @@ importers:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
+
+  packages/workstation:
+    dependencies:
+      bindings:
+        specifier: workspace:*
+        version: link:../bindings
+      geometry:
+        specifier: workspace:*
+        version: link:../geometry
+      ui:
+        specifier: workspace:*
+        version: link:../ui
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.4.1(@types/node@20.19.27)(tsx@4.21.0)
 
 packages:
 

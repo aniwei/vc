@@ -2,6 +2,14 @@ import * as path from 'path'
 import * as fs from 'fs/promises'
 import { CanvasKitApi } from '../src/CanvasKitApi'
 
+function tryInvoke(name: string, fallback: number): number {
+  try {
+    return CanvasKitApi.invoke(name)
+  } catch {
+    return fallback
+  }
+}
+
 async function main() {
   await CanvasKitApi.ready({
     path: path.resolve(process.cwd(), '../perf-web/public/cheap/canvaskit.wasm')
@@ -22,6 +30,12 @@ async function main() {
   const mipmapModeNone = CanvasKitApi.invoke('SkMipmapMode_None')
   const mipmapModeNearest = CanvasKitApi.invoke('SkMipmapMode_Nearest')
   const mipmapModeLinear = CanvasKitApi.invoke('SkMipmapMode_Linear')
+
+  // NOTE: TileMode 在部分 cheap wasm 版本里可能还没有导出；这里做兼容回退。
+  const tileModeClamp = tryInvoke('SkTileMode_Clamp', 0)
+  const tileModeRepeat = tryInvoke('SkTileMode_Repeat', 1)
+  const tileModeMirror = tryInvoke('SkTileMode_Mirror', 2)
+  const tileModeDecal = tryInvoke('SkTileMode_Decal', 3)
 
   const clipOpDifference = CanvasKitApi.invoke('SkClipOp_Difference')
   const clipOpIntersect = CanvasKitApi.invoke('SkClipOp_Intersect')
@@ -62,6 +76,14 @@ async function main() {
   js.push(`  None = ${mipmapModeNone},`)
   js.push(`  Nearest = ${mipmapModeNearest},`)
   js.push(`  Linear = ${mipmapModeLinear},`)
+  js.push('}')
+
+  js.push('')
+  js.push('export enum TileMode {')
+  js.push(`  Clamp = ${tileModeClamp},`)
+  js.push(`  Repeat = ${tileModeRepeat},`)
+  js.push(`  Mirror = ${tileModeMirror},`)
+  js.push(`  Decal = ${tileModeDecal},`)
   js.push('}')
 
   js.push('')

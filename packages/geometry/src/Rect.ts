@@ -1,12 +1,14 @@
 import { Offset } from './Offset'
 import { Size } from './Size'
 
-interface LTRB extends Array<number> {
+export interface LTRB extends Array<number> {
   0: number
   1: number
   2: number
   3: number
 }
+
+export type LTRBRect = [number, number, number, number]
 
 export class Rect {
   static fromLTWH(left: number, top: number, width: number, height: number): Rect {

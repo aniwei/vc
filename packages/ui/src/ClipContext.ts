@@ -1,3 +1,5 @@
+import { Canvas } from 'bindings'
+
 export abstract class ClipContext {
-  abstract canvas: unknown | null
+  abstract canvas: Canvas | null
 }

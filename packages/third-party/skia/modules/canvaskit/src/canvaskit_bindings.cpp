@@ -99,6 +99,22 @@ int SkMipmapMode_Linear() {
   return static_cast<int>(SkMipmapMode::kLinear);
 }
 
+int SkTileMode_Clamp() {
+  return static_cast<int>(SkTileMode::kClamp);
+}
+
+int SkTileMode_Repeat() {
+  return static_cast<int>(SkTileMode::kRepeat);
+}
+
+int SkTileMode_Mirror() {
+  return static_cast<int>(SkTileMode::kMirror);
+}
+
+int SkTileMode_Decal() {
+  return static_cast<int>(SkTileMode::kDecal);
+}
+
 int SkClipOp_Difference() {
   return static_cast<int>(SkClipOp::kDifference);
 }

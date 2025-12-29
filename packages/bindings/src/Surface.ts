@@ -117,6 +117,10 @@ export class Surface extends ManagedObj {
     return this.ptr as unknown as SurfacePtr
   }
 
+  get canvas(): Canvas {
+    return this.getCanvas()
+  }
+
   getCanvas(): Canvas {
     // Canvas is non-owning; Surface owns it.
     return this.raw.getCanvas()

@@ -1,4 +1,4 @@
-import { Size } from 'geometry'
+import { Size } from 'bindings'
 
 export enum BoxFit {
   Fill = 'fill',

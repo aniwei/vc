@@ -1,15 +1,15 @@
-import { Offset, Rect } from 'painting'
-import type { CanvasLike } from 'painting'
+import { Offset, Rect } from 'geometry'
 import { BoxConstraints } from './Constraints'
-import type { RenderObject } from './Object'
 import { PaintingContext } from './PaintingContext'
+import type { Canvas } from 'bindings'
+import type { Obj } from './Object'
 import type { ViewConfiguration } from './ViewConfiguration'
 
 export class PipelineOwner {
-  rootNode: RenderObject | null = null
+  rootNode: Obj | null = null
   configuration: ViewConfiguration | null = null
 
-  setRoot(node: RenderObject | null): void {
+  setRoot(node: Obj | null): void {
     if (this.rootNode === node) {
       return
     }
@@ -38,7 +38,7 @@ export class PipelineOwner {
     return true
   }
 
-  flushPaint(canvas: CanvasLike | null = null): boolean {
+  flushPaint(canvas: Canvas | null = null): boolean {
     if (!this.rootNode) {
       return false
     }
@@ -51,7 +51,8 @@ export class PipelineOwner {
     const bounds = configuration
       ? Rect.fromLTWH(0, 0, configuration.width, configuration.height)
       : Rect.fromLTWH(0, 0, 0, 0)
-    const context = PaintingContext.create(this, null, bounds)
+      
+    const context = new PaintingContext(this, bounds)
     context.canvas = canvas
     this.rootNode.paintWithContext(context, Offset.ZERO)
 

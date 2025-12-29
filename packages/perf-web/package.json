@@ -11,7 +11,9 @@
   "dependencies": {
     "@libmedia/cheap": "^1.2.0",
     "bindings": "workspace:*",
-    "canvaskit-wasm": "^0.40.0"
+    "canvaskit-wasm": "^0.40.0",
+    "ui": "workspace:*",
+    "geometry": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.0.0",

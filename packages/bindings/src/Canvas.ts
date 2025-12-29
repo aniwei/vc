@@ -14,6 +14,8 @@ type LTRBRect = readonly [number, number, number, number]
 
 export interface ImagePaint {
   opacity?: number
+  filterMode?: FilterMode
+  mipmapMode?: MipmapMode
 }
 
 function writeF32Array(ptr: number, values: ArrayLike<number>): void {
@@ -188,19 +190,22 @@ export class Canvas extends ManagedObj {
   drawImageWithPaint(image: Image, x: number, y: number, paint?: ImagePaint | Paint | null): this {
     invariant(!this.raw.isDeleted(), 'Canvas is deleted')
 
+    const filterMode = paint && !(paint instanceof Paint) ? ((paint as ImagePaint).filterMode ?? FilterMode.Linear) : FilterMode.Linear
+    const mipmapMode = paint && !(paint instanceof Paint) ? ((paint as ImagePaint).mipmapMode ?? MipmapMode.None) : MipmapMode.None
+
     const opacity = paint && !(paint instanceof Paint) ? +((paint as ImagePaint).opacity ?? 1) : 1
     if (!(opacity > 0)) {
       return this
     }
 
     if (opacity >= 1) {
-      return this.drawImage(image, x, y, FilterMode.Linear, MipmapMode.None)
+      return this.drawImage(image, x, y, filterMode, mipmapMode)
     }
 
     const paintPtr = CanvasKitApi.Paint.make()
     try {
       CanvasKitApi.Paint.setAlphaf(paintPtr, opacity)
-      CanvasKitApi.Canvas.drawImageWithPaint(this.raw.ptr, image.raw.ptr, x, y, FilterMode.Linear, MipmapMode.None, paintPtr)
+      CanvasKitApi.Canvas.drawImageWithPaint(this.raw.ptr, image.raw.ptr, x, y, filterMode, mipmapMode, paintPtr)
     } finally {
       CanvasKitApi.Paint.delete(paintPtr)
     }
@@ -263,6 +268,8 @@ export class Canvas extends ManagedObj {
     }
 
     const opacity = +((paint?.opacity ?? 1) as number)
+    const filterMode = (paint?.filterMode ?? FilterMode.Linear) as FilterMode
+    const mipmapMode2 = (paint?.mipmapMode ?? MipmapMode.None) as MipmapMode
     if (!(opacity > 0)) {
       return this
     }
@@ -279,8 +286,8 @@ export class Canvas extends ManagedObj {
         dstT,
         dstR,
         dstB,
-        FilterMode.Linear,
-        MipmapMode.None,
+        filterMode,
+        mipmapMode2,
       )
       return this
     }
@@ -299,8 +306,8 @@ export class Canvas extends ManagedObj {
         dstT,
         dstR,
         dstB,
-        FilterMode.Linear,
-        MipmapMode.None,
+        filterMode,
+        mipmapMode2,
         paintPtr,
       )
     } finally {

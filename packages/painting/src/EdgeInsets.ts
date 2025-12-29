@@ -1,7 +1,7 @@
 import invariant from 'invariant'
 
-import { lerp } from 'shared'
-import { Size } from 'geometry'
+import { lerp, Eq } from 'shared'
+import { Size } from 'bindings'
 import { TextDirection } from 'bindings'
 
 function clamp(value: number, min: number, max: number): number {
@@ -15,22 +15,29 @@ export enum Axis {
   Vertical = 'vertical',
 }
 
-export abstract class EdgeInsetsGeometry {
-  static get INFINITY(): EdgeInsetsGeometry {
+export abstract class EdgeInsetsGeometry implements Eq<EdgeInsetsGeometry> {
+  static get Infinity(): EdgeInsetsGeometry {
     return MixedEdgeInsets.fromLRSETB(
       POSITIVE_INFINITY,
       POSITIVE_INFINITY,
       POSITIVE_INFINITY,
       POSITIVE_INFINITY,
       POSITIVE_INFINITY,
-      POSITIVE_INFINITY,
-    )
+      POSITIVE_INFINITY)
   }
 
   static lerp(a: EdgeInsetsGeometry | null, b: EdgeInsetsGeometry | null, t: number): EdgeInsetsGeometry | null {
-    if (a === null && b === null) return null
-    if (a === null) return b ? b.multiply(t) : null
-    if (b === null) return a.multiply(1.0 - t)
+    if (a === null && b === null) {
+      return null
+    }
+    
+    if (a === null) {
+      return b ? b.mul(t) : null
+    }
+    
+    if (b === null) {
+      return a.mul(1.0 - t)
+    }
 
     if (a instanceof EdgeInsets && b instanceof EdgeInsets) {
       return EdgeInsets.lerp(a, b, t)
@@ -94,11 +101,11 @@ export abstract class EdgeInsetsGeometry {
   }
 
   abstract add(other: EdgeInsetsGeometry): EdgeInsetsGeometry
-  abstract subtract(other: EdgeInsetsGeometry): EdgeInsetsGeometry
+  abstract sub(other: EdgeInsetsGeometry): EdgeInsetsGeometry
+  abstract mul(other: number): EdgeInsetsGeometry
+  abstract div(other: number): EdgeInsetsGeometry
+  abstract mod(other: number): EdgeInsetsGeometry
   abstract inverse(): EdgeInsetsGeometry
-  abstract multiply(other: number): EdgeInsetsGeometry
-  abstract divide(other: number): EdgeInsetsGeometry
-  abstract modulo(other: number): EdgeInsetsGeometry
   abstract resolve(direction: TextDirection): EdgeInsets
 
   along(axis: Axis): number {
@@ -125,7 +132,7 @@ export abstract class EdgeInsetsGeometry {
     )
   }
 
-  equal(other: EdgeInsetsGeometry | null): boolean {
+  eq(other: EdgeInsetsGeometry | null): boolean {
     return (
       other instanceof EdgeInsetsGeometry &&
       other.left === this.left &&
@@ -137,18 +144,18 @@ export abstract class EdgeInsetsGeometry {
     )
   }
 
-  notEqual(other: EdgeInsetsGeometry | null): boolean {
-    return !this.equal(other)
+  notEq(other: EdgeInsetsGeometry | null): boolean {
+    return !this.eq(other)
   }
 }
 
 export class EdgeInsets extends EdgeInsetsGeometry {
-  static ZERO = EdgeInsets.only()
+  static Zero = EdgeInsets.only()
 
   static lerp(a: EdgeInsets | null, b: EdgeInsets | null, t: number): EdgeInsets | null {
     if (a === null && b === null) return null
-    if (a === null) return b ? (b.multiply(t) as EdgeInsets) : null
-    if (b === null) return a.multiply(1.0 - t) as EdgeInsets
+    if (a === null) return b ? (b.mul(t) as EdgeInsets) : null
+    if (b === null) return a.mul(1.0 - t) as EdgeInsets
 
     return EdgeInsets.fromLTRB(
       lerp(a.left, b.left, t),
@@ -189,30 +196,29 @@ export class EdgeInsets extends EdgeInsetsGeometry {
     )
   }
 
-  subtract(other: EdgeInsetsGeometry): EdgeInsetsGeometry {
+  sub(other: EdgeInsetsGeometry): EdgeInsetsGeometry {
     return MixedEdgeInsets.fromLRSETB(
       this.left - other.left,
       this.right - other.right,
       this.start - other.start,
       this.end - other.end,
       this.top - other.top,
-      this.bottom - other.bottom,
-    )
+      this.bottom - other.bottom)
   }
 
   inverse(): EdgeInsetsGeometry {
     return EdgeInsets.fromLTRB(-this.left, -this.top, -this.right, -this.bottom)
   }
 
-  multiply(other: number): EdgeInsetsGeometry {
+  mul(other: number): EdgeInsetsGeometry {
     return EdgeInsets.fromLTRB(this.left * other, this.top * other, this.right * other, this.bottom * other)
   }
 
-  divide(other: number): EdgeInsetsGeometry {
+  div(other: number): EdgeInsetsGeometry {
     return EdgeInsets.fromLTRB(this.left / other, this.top / other, this.right / other, this.bottom / other)
   }
 
-  modulo(other: number): EdgeInsetsGeometry {
+  mod(other: number): EdgeInsetsGeometry {
     return EdgeInsets.fromLTRB(this.left % other, this.top % other, this.right % other, this.bottom % other)
   }
 
@@ -222,19 +228,18 @@ export class EdgeInsets extends EdgeInsetsGeometry {
 }
 
 export class EdgeInsetsDirectional extends EdgeInsetsGeometry {
-  static ZERO = EdgeInsetsDirectional.only()
+  static Zero = EdgeInsetsDirectional.only()
 
   static lerp(a: EdgeInsetsDirectional | null, b: EdgeInsetsDirectional | null, t: number): EdgeInsetsDirectional | null {
     if (a === null && b === null) return null
-    if (a === null) return b ? (b.multiply(t) as EdgeInsetsDirectional) : null
-    if (b === null) return a.multiply(1.0 - t) as EdgeInsetsDirectional
+    if (a === null) return b ? (b.mul(t) as EdgeInsetsDirectional) : null
+    if (b === null) return a.mul(1.0 - t) as EdgeInsetsDirectional
 
     return EdgeInsetsDirectional.only(
       lerp(a.start, b.start, t),
       lerp(a.top, b.top, t),
       lerp(a.end, b.end, t),
-      lerp(a.bottom, b.bottom, t),
-    )
+      lerp(a.bottom, b.bottom, t))
   }
 
   static fromSTEB(start: number, top: number, end: number, bottom: number): EdgeInsetsDirectional {
@@ -260,11 +265,10 @@ export class EdgeInsetsDirectional extends EdgeInsetsGeometry {
       this.start + other.start,
       this.end + other.end,
       this.top + other.top,
-      this.bottom + other.bottom,
-    )
+      this.bottom + other.bottom)
   }
 
-  subtract(other: EdgeInsetsGeometry): EdgeInsetsGeometry {
+  sub(other: EdgeInsetsGeometry): EdgeInsetsGeometry {
     return MixedEdgeInsets.fromLRSETB(
       this.left - other.left,
       this.right - other.right,
@@ -279,15 +283,15 @@ export class EdgeInsetsDirectional extends EdgeInsetsGeometry {
     return EdgeInsetsDirectional.fromSTEB(-this.start, -this.top, -this.end, -this.bottom)
   }
 
-  multiply(other: number): EdgeInsetsGeometry {
+  mul(other: number): EdgeInsetsGeometry {
     return EdgeInsetsDirectional.fromSTEB(this.start * other, this.top * other, this.end * other, this.bottom * other)
   }
 
-  divide(other: number): EdgeInsetsGeometry {
+  div(other: number): EdgeInsetsGeometry {
     return EdgeInsetsDirectional.fromSTEB(this.start / other, this.top / other, this.end / other, this.bottom / other)
   }
 
-  modulo(other: number): EdgeInsetsGeometry {
+  mod(other: number): EdgeInsetsGeometry {
     return EdgeInsetsDirectional.fromSTEB(this.start % other, this.top % other, this.end % other, this.bottom % other)
   }
 
@@ -318,56 +322,51 @@ export class MixedEdgeInsets extends EdgeInsetsGeometry {
       this.start + other.start,
       this.end + other.end,
       this.top + other.top,
-      this.bottom + other.bottom,
-    )
+      this.bottom + other.bottom)
   }
 
-  subtract(other: EdgeInsetsGeometry): EdgeInsetsGeometry {
+  sub(other: EdgeInsetsGeometry): EdgeInsetsGeometry {
     return MixedEdgeInsets.fromLRSETB(
       this.left - other.left,
       this.right - other.right,
       this.start - other.start,
       this.end - other.end,
       this.top - other.top,
-      this.bottom - other.bottom,
-    )
+      this.bottom - other.bottom)
   }
 
   inverse(): EdgeInsetsGeometry {
     return MixedEdgeInsets.fromLRSETB(-this.left, -this.right, -this.start, -this.end, -this.top, -this.bottom)
   }
 
-  multiply(other: number): EdgeInsetsGeometry {
+  mul(other: number): EdgeInsetsGeometry {
     return MixedEdgeInsets.fromLRSETB(
       this.left * other,
       this.right * other,
       this.start * other,
       this.end * other,
       this.top * other,
-      this.bottom * other,
-    )
+      this.bottom * other)
   }
 
-  divide(other: number): EdgeInsetsGeometry {
+  div(other: number): EdgeInsetsGeometry {
     return MixedEdgeInsets.fromLRSETB(
       this.left / other,
       this.right / other,
       this.start / other,
       this.end / other,
       this.top / other,
-      this.bottom / other,
-    )
+      this.bottom / other)
   }
 
-  modulo(other: number): EdgeInsetsGeometry {
+  mod(other: number): EdgeInsetsGeometry {
     return MixedEdgeInsets.fromLRSETB(
       this.left % other,
       this.right % other,
       this.start % other,
       this.end % other,
       this.top % other,
-      this.bottom % other,
-    )
+      this.bottom % other)
   }
 
   resolve(direction: TextDirection): EdgeInsets {

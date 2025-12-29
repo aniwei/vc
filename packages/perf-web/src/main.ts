@@ -2,6 +2,9 @@ import CanvasKitInit from 'canvaskit-wasm/full'
 import canvaskitWasmUrl from 'canvaskit-wasm/bin/full/canvaskit.wasm?url'
 
 import { CanvasKitApi } from '../../bindings/src/CanvasKitApi'
+import { Surface, Paint, PaintStyle } from '../../bindings/src'
+import * as UI from '../../ui/src/Index'
+import { Offset, Rect, Size } from '../../geometry/src'
 
 async function createCanvasKit(options: { wasmPath: string }) {
   await CanvasKitApi.ready({ uri: options.wasmPath })
@@ -661,6 +664,60 @@ async function renderEllipsisDemo(canvasEl: HTMLCanvasElement): Promise<void> {
   }
 }
 
+async function renderUiDemo(canvasEl: HTMLCanvasElement): Promise<void> {
+  // Use bindings + ui directly; render into a SW surface and blit pixels to the DOM canvas.
+  await CanvasKitApi.ready({ uri: '/cheap/canvaskit.wasm' })
+
+  const W = canvasEl.width | 0
+  const H = canvasEl.height | 0
+  const surface = Surface.makeSw(W, H)
+
+  class DemoPainter extends UI.CustomBoxPainter {
+    paint(context: any, size: Size, offset: Offset): void {
+      const canvas = context.canvas
+      if (!canvas) return
+
+      canvas.clear(0xff0b0f14)
+
+      const bgPaint = new Paint().setStyle(PaintStyle.Fill).setColor(0xff1f2937)
+      const fgPaint = new Paint().setStyle(PaintStyle.Fill).setColor(0xff60a5fa)
+
+      try {
+        const outer = Rect.fromLTWH(offset.dx, offset.dy, size.width, size.height)
+        const inner = Rect.fromLTWH(offset.dx + 16, offset.dy + 16, Math.max(0, size.width - 32), 56)
+        canvas.drawRect(outer, bgPaint)
+        canvas.drawRect(inner, fgPaint)
+      } finally {
+        bgPaint.dispose()
+        fgPaint.dispose()
+      }
+    }
+  }
+
+  class FillBox extends UI.CustomBox<DemoPainter> {
+    override layout(constraints: any): void {
+      this.constraints = constraints
+      this.size = new Size(constraints.maxWidth, constraints.maxHeight)
+      this.needsLayout = false
+    }
+  }
+
+  const view = new UI.View(new UI.ViewConfiguration(W, H, window.devicePixelRatio))
+  view.adoptChild(new FillBox(new DemoPainter(), null))
+  view.frame(surface.canvas)
+
+  const bytes = surface.readPixelsRgba8888(0, 0, W, H)
+  const ctx2d = canvasEl.getContext('2d')
+  if (!ctx2d) {
+    surface.dispose()
+    throw new Error('renderUiDemo: canvas.getContext(\'2d\') returned null')
+  }
+
+  const img = new ImageData(new Uint8ClampedArray(bytes.buffer, bytes.byteOffset, bytes.byteLength), W, H)
+  ctx2d.putImageData(img, 0, 0)
+  surface.dispose()
+}
+
 async function main() {
   const outEl = document.getElementById('out')!
   const runBtn = document.getElementById('run') as HTMLButtonElement
@@ -694,6 +751,11 @@ async function main() {
     log(outEl, 'rendering ellipsis demo (cheap)...')
     await renderEllipsisDemo(canvasEl)
     log(outEl, 'ellipsis demo done')
+
+    log(outEl, '')
+    log(outEl, 'rendering ui demo (bindings.Surface.canvas + ui.View)...')
+    await renderUiDemo(canvasEl)
+    log(outEl, 'ui demo done')
 
     runBtn.disabled = false
   }

@@ -9,6 +9,12 @@
     "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && pnpm run gen:canvaskitapi && tsc -p tsconfig.json",
     "smoke": "pnpm run build && node dist/smoke.js"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

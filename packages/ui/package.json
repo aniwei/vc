@@ -25,10 +25,6 @@
       "types": "./dist/ClipContext.d.ts",
       "default": "./dist/ClipContext.js"
     },
-    "./CheapBindingsCanvas": {
-      "types": "./dist/CheapBindingsCanvas.d.ts",
-      "default": "./dist/CheapBindingsCanvas.js"
-    },
     "./Constraints": {
       "types": "./dist/Constraints.d.ts",
       "default": "./dist/Constraints.js"
@@ -146,7 +142,9 @@
   "license": "ISC",
   "packageManager": "pnpm@10.22.0",
   "dependencies": {
-    "painting": "workspace:*"
+    "painting": "workspace:*",
+    "geometry": "workspace:*",
+    "bindings": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.0.0"

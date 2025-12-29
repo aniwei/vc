@@ -5,10 +5,6 @@ export interface DragBoxOptions {
 }
 
 export class DragBox extends Box {
-  static create(options: DragBoxOptions = {}): DragBox {
-    return new DragBox(options.child ?? null)
-  }
-
   constructor(public child: Box | null = null) {
     super()
     if (this.child) {

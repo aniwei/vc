@@ -1,16 +1,14 @@
-import { CanvasLike, LTRBRect, Offset, Rect } from 'painting'
+import { Offset, Rect } from 'geometry'
+import { ClipOp } from 'bindings'
 import { ClipContext } from './ClipContext'
-import type { RenderObject } from './Object'
+import type { Canvas } from 'bindings'
+import type { Obj } from './Object'
 import type { PipelineOwner } from './PipelineOwner'
 
 export type PaintingContextCallback = (context: PaintingContext, offset: Offset) => void
 
 export class PaintingContext extends ClipContext {
-  static create(pipeline: PipelineOwner, _containerLayer: unknown, estimatedBounds: Rect): PaintingContext {
-    return new PaintingContext(pipeline, estimatedBounds)
-  }
-
-  canvas: CanvasLike | null = null
+  canvas: Canvas | null = null
 
   constructor(
     public readonly pipeline: PipelineOwner,
@@ -19,7 +17,7 @@ export class PaintingContext extends ClipContext {
     super()
   }
 
-  paintChild(child: RenderObject, offset: Offset): void {
+  paintChild(child: Obj, offset: Offset): void {
     child.paintWithContext(this, offset)
   }
 
@@ -56,14 +54,13 @@ export class PaintingContext extends ClipContext {
       clipRect.left + offset.dx,
       clipRect.top + offset.dy,
       clipRect.width,
-      clipRect.height,
-    )
+      clipRect.height)
 
-    const ltrb: LTRBRect = [shifted.left, shifted.top, shifted.right, shifted.bottom]
     this.withSave(() => {
-      canvas.clipRect(ltrb)
+      canvas.clipRect(shifted, ClipOp.Intersect, true)
       painter(this, offset)
     })
+
     return null
   }
 

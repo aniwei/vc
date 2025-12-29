@@ -1,5 +1,5 @@
 import invariant from 'invariant'
-import { Offset, Rect, Size } from 'geometry'
+import { Offset, Rect, Size } from 'bindings'
 import { TextDirection } from 'bindings'
 import { Eq, lerp } from 'shared'
 
@@ -80,7 +80,7 @@ export abstract class AlignmentGeometry extends Eq<AlignmentGeometry> {
     return !this.eq(other)
   }
 
-  description () {
+  debugDescription () {
     return `AlignmentGeometry(x: ${this.x}, y: ${this.y}, start: ${this.start})`
   }
 }
@@ -334,10 +334,7 @@ export class AlignmentDirectional extends AlignmentGeometry {
   }
 
   debugDescription () {
-    return `AlignmentDirectional(
-      [y]: ${this.y}, 
-      [start]: ${this.start}
-    )`
+    return `AlignmentDirectional(y: ${this.y}, start: ${this.start})`
   }
 }
 

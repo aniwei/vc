@@ -17,10 +17,6 @@
       "types": "./dist/Alignment.d.ts",
       "default": "./dist/Alignment.js"
     },
-    "./Basic": {
-      "types": "./dist/Basic.d.ts",
-      "default": "./dist/Basic.js"
-    },
     "./Border": {
       "types": "./dist/Border.d.ts",
       "default": "./dist/Border.js"
@@ -53,10 +49,6 @@
       "types": "./dist/EdgeInsets.d.ts",
       "default": "./dist/EdgeInsets.js"
     },
-     "./Geometry": {
-       "types": "./dist/Geometry.d.ts",
-       "default": "./dist/Geometry.js"
-     },
     "./Gradient": {
       "types": "./dist/Gradient.d.ts",
       "default": "./dist/Gradient.js"
@@ -76,14 +68,6 @@
     "./InlineSpan": {
       "types": "./dist/InlineSpan.d.ts",
       "default": "./dist/InlineSpan.js"
-    },
-    "./Painting": {
-      "types": "./dist/painting.d.ts",
-      "default": "./dist/painting.js"
-    },
-    "./painting": {
-      "types": "./dist/painting.d.ts",
-      "default": "./dist/painting.js"
     },
     "./Shadow": {
       "types": "./dist/Shadow.d.ts",
@@ -124,7 +108,6 @@
   },
   "dependencies": {
     "bindings": "workspace:*",
-    "geometry": "workspace:*",
     "shared": "workspace:*"
   }
 }

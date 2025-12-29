@@ -1,29 +1,18 @@
-import { Painting, Size } from 'painting'
+import { paintWithImage } from 'painting'
+import { Size } from 'geometry'
 import { BoxConstraints } from './Constraints'
 import { Box } from './Box'
+import type { Image as NativeImage } from 'bindings'
 import type { PaintingContext } from './PaintingContext'
 
-type ImageWithPtrAndSize = {
-  ptr: unknown
-  width: number
-  height: number
-}
-
-function resolveImageSize(image: unknown): Size | null {
-  if (!image || typeof image !== 'object') return null
-
-  const width = (image as any).width
-  const height = (image as any).height
-  if (typeof width === 'number' && typeof height === 'number') {
-    return new Size(width, height)
-  }
-
-  return null
+function resolveImageSize(image: NativeImage | null): Size | null {
+  if (!image) return null
+  return new Size(image.width, image.height)
 }
 
 export class Image extends Box {
   constructor(
-    public image: unknown,
+    public image: NativeImage | null,
     public width: number | null = null,
     public height: number | null = null,
   ) {
@@ -56,18 +45,20 @@ export class Image extends Box {
       return
     }
 
-    const intrinsic = resolveImageSize(this.image)
+    const image = this.image
+    if (!image) {
+      this.needsPaint = false
+      return
+    }
+
+    const intrinsic = resolveImageSize(image)
     const iw = intrinsic?.width ?? this.width ?? size.width
     const ih = intrinsic?.height ?? this.height ?? size.height
 
-    const imageLike: ImageWithPtrAndSize = {
-      ptr: this.image,
-      width: iw,
-      height: ih,
-    }
-
     const rect = offset.and(size)
-    Painting.paintWithImage(canvas, rect, imageLike)
+    // Note: bindings.Image already carries width/height and a wasm ptr.
+    // iw/ih are used for layout only; painting draws the actual image object.
+    paintWithImage(canvas, rect, image)
 
     this.needsPaint = false
   }

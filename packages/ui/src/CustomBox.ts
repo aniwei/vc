@@ -1,4 +1,4 @@
-import { Offset, Size } from 'painting'
+import { Offset, Size } from 'geometry'
 import { Box } from './Box'
 import type { PaintingContext } from './PaintingContext'
 

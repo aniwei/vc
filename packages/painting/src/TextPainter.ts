@@ -1,9 +1,9 @@
-import { Size } from 'geometry'
-import { InlineSpan } from './InlineSpan'
+import { Size } from 'bindings'
 import { Canvas, Paragraph, ParagraphBuilder, TextAlign } from 'bindings'
+import { InlineSpan } from './InlineSpan'
 import { TextSpan } from './TextSpan'
 
-export enum TextOverflowKind {
+export enum TextOverflow {
   Clip = 'clip',
   Ellipsis = 'ellipsis',
 }
@@ -12,7 +12,7 @@ export interface TextPainterOptions {
   text: InlineSpan
   maxLines?: number | null
   ellipsis?: string | null
-  overflow?: TextOverflowKind | null
+  overflow?: TextOverflow | null
 
   // cheap paragraph backend needs a font file in bytes.
   fontBytes: Uint8Array
@@ -29,7 +29,7 @@ export class TextPainter {
 
   #maxLinesOverride: number | null | undefined = undefined
   #ellipsisOverride: string | null | undefined = undefined
-  #overflowOverride: TextOverflowKind | null | undefined = undefined
+  #overflowOverride: TextOverflow | null | undefined = undefined
 
   get maxLines(): number | null {
     return this.#maxLinesOverride !== undefined ? this.#maxLinesOverride : (this.options.maxLines ?? null)
@@ -53,11 +53,11 @@ export class TextPainter {
     this.#paragraph = null
   }
 
-  get overflow(): TextOverflowKind | null {
+  get overflow(): TextOverflow | null {
     return this.#overflowOverride !== undefined ? this.#overflowOverride : (this.options.overflow ?? null)
   }
 
-  set overflow(value: TextOverflowKind | null) {
+  set overflow(value: TextOverflow | null) {
     if (this.#overflowOverride === value) return
     this.#overflowOverride = value
     this.#paragraph?.dispose()
@@ -78,7 +78,7 @@ export class TextPainter {
 
     const maxLines = (maxLinesOpt ?? 0) | 0
     const effectiveEllipsis = (overflowOpt != null)
-      ? (overflowOpt === TextOverflowKind.Ellipsis ? (ellipsisOpt ?? '…') : null)
+      ? (overflowOpt === TextOverflow.Ellipsis ? (ellipsisOpt ?? '…') : null)
       : (ellipsisOpt ?? null)
 
     const inferredFontSize = this.options.fontSize ?? (
@@ -145,8 +145,7 @@ export class TextPainter {
         color: inferredColor,
         textAlign: this.options.textAlign ?? TextAlign.Start,
         maxLines,
-        ellipsis: effectiveEllipsis,
-      })
+        ellipsis: effectiveEllipsis})
     }
 
     this.#paragraph.layout(maxWidth)

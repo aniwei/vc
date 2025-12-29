@@ -1,16 +1,16 @@
-import { Offset, Rect, Size } from 'painting'
+import { Offset, Rect, Size } from 'geometry'
 import { BoxConstraints } from './Constraints'
 import type { PaintingContext } from './PaintingContext'
 import type { PipelineOwner } from './PipelineOwner'
 
-export class RenderObject {
-  parent: RenderObject | null = null
+export class Obj {
+  parent: Obj | null = null
   owner: PipelineOwner | null = null
 
-  previousSibling: RenderObject | null = null
-  nextSibling: RenderObject | null = null
-  firstChild: RenderObject | null = null
-  lastChild: RenderObject | null = null
+  previousSibling: Obj | null = null
+  nextSibling: Obj | null = null
+  firstChild: Obj | null = null
+  lastChild: Obj | null = null
 
   depth = 0
 
@@ -21,7 +21,7 @@ export class RenderObject {
     return this.owner !== null
   }
 
-  adoptChild(child: RenderObject): void {
+  adoptChild(child: Obj): void {
     if (child.parent) {
       child.parent.dropChild(child)
     }
@@ -34,7 +34,7 @@ export class RenderObject {
       child.previousSibling = null
       child.nextSibling = null
     } else {
-      const last = this.lastChild as RenderObject
+      const last = this.lastChild as Obj
       last.nextSibling = child
       child.previousSibling = last
       child.nextSibling = null
@@ -48,7 +48,7 @@ export class RenderObject {
     this.markNeedsLayout()
   }
 
-  dropChild(child: RenderObject): void {
+  dropChild(child: Obj): void {
     if (child.parent !== this) {
       return
     }
@@ -152,4 +152,5 @@ export interface SizedObject {
   size: Size | null
 }
 
-export interface Object extends RenderObject {}
+export interface Object extends Obj {}
+

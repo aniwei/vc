@@ -22,6 +22,13 @@ export enum MipmapMode {
   Linear = 2,
 }
 
+export enum TileMode {
+  Clamp = 0,
+  Repeat = 1,
+  Mirror = 2,
+  Decal = 3,
+}
+
 export enum ClipOp {
   Difference = 0,
   Intersect = 1,

@@ -1,13 +1,14 @@
+import { Eq } from 'shared'
+
 export interface TextPaintingStyleOptions {
   fontSize?: number
   fontFamily?: string
-  // ARGB color, e.g. 0xff000000 for opaque black
   color?: number
 }
 
-export class TextPaintingStyle {
-  static create(options?: TextPaintingStyleOptions): TextPaintingStyle {
-    return new TextPaintingStyle(options?.fontSize, options?.fontFamily, options?.color)
+export class TextPaintingStyle implements Eq<TextPaintingStyle> {
+  static create(options: TextPaintingStyleOptions = {}): TextPaintingStyle {
+    return new TextPaintingStyle(options.fontSize, options.fontFamily, options.color)
   }
 
   constructor(
@@ -16,16 +17,15 @@ export class TextPaintingStyle {
     public readonly color: number | undefined,
   ) {}
 
-  equal(other: TextPaintingStyle | null): boolean {
+  eq(other: TextPaintingStyle | null): boolean {
     return (
       !!other &&
       other.fontSize === this.fontSize &&
       other.fontFamily === this.fontFamily &&
-      other.color === this.color
-    )
+      other.color === this.color)
   }
 
-  notEqual(other: TextPaintingStyle | null): boolean {
-    return !this.equal(other)
+  notEq(other: TextPaintingStyle | null): boolean {
+    return !this.eq(other)
   }
 }

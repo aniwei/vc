@@ -5,10 +5,6 @@ export interface ContainerOptions {
 }
 
 export class Container extends Box {
-  static create(options: ContainerOptions = {}): Container {
-    return new Container(options.children ?? [])
-  }
-
   constructor(children: Box[] = []) {
     super()
 
