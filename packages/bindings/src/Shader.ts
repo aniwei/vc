@@ -2,24 +2,7 @@ import invariant from 'invariant'
 
 import { ManagedObj, ManagedObjRegistry, Ptr } from './ManagedObj'
 import { CanvasKitApi } from './CanvasKitApi'
-
-function writeU32Array(ptr: number, values: ArrayLike<number>): void {
-  const heap = CanvasKitApi.heapU8()
-  const u32 = new Uint32Array(heap.buffer)
-  const off = (ptr >>> 0) >>> 2
-  for (let i = 0; i < values.length; i++) {
-    u32[off + i] = (values[i]! >>> 0) as any
-  }
-}
-
-function writeF32Array(ptr: number, values: ArrayLike<number>): void {
-  const heap = CanvasKitApi.heapU8()
-  const f32 = new Float32Array(heap.buffer)
-  const off = (ptr >>> 0) >>> 2
-  for (let i = 0; i < values.length; i++) {
-    f32[off + i] = +values[i]!
-  }
-}
+import { writeFloat32Array, writeUint32Array } from './wasm/memory'
 
 class ShaderPtr extends Ptr {
   constructor(ptr?: number) {
@@ -28,8 +11,8 @@ class ShaderPtr extends Ptr {
 
   delete(): void {
     if (!this.isDeleted()) {
-      CanvasKitApi.Shader.delete(this.ptr)
-      this.ptr = -1
+      CanvasKitApi.Shader.delete(this.raw)
+      this.raw = -1
     }
   }
 
@@ -38,15 +21,15 @@ class ShaderPtr extends Ptr {
   }
 
   clone(): ShaderPtr {
-    return new ShaderPtr(this.ptr)
+    return new ShaderPtr(this.raw)
   }
 
   isAliasOf(other: any): boolean {
-    return other instanceof ShaderPtr && this.ptr === other.ptr
+    return other instanceof ShaderPtr && this.raw === other.raw
   }
 
   isDeleted(): boolean {
-    return this.ptr === -1
+    return this.raw === -1
   }
 }
 
@@ -73,11 +56,11 @@ export class Shader extends ManagedObj {
     const posPtr = CanvasKitApi.malloc(count * 4) as number
 
     try {
-      writeU32Array(colorsPtr, colors)
+      writeUint32Array(colorsPtr, colors)
 
       const stops = positions && positions.length === count ? positions : null
       if (stops) {
-        writeF32Array(posPtr, stops)
+        writeFloat32Array(posPtr, stops)
       } else {
         // Evenly spaced defaults.
         const tmp = new Float32Array(count)
@@ -85,7 +68,7 @@ export class Shader extends ManagedObj {
         else {
           for (let i = 0; i < count; i++) tmp[i] = i / (count - 1)
         }
-        writeF32Array(posPtr, tmp)
+        writeFloat32Array(posPtr, tmp)
       }
 
       const shaderPtr = CanvasKitApi.Shader.makeLinearGradient(
@@ -110,16 +93,16 @@ export class Shader extends ManagedObj {
     super(ptr)
   }
 
+  get ptr(): ShaderPtr {
+    return super.ptr as ShaderPtr
+  }
+
   resurrect(): Ptr {
     throw new Error('Shader cannot be resurrected')
   }
 
-  get raw(): ShaderPtr {
-    return this.ptr as unknown as ShaderPtr
-  }
-
   dispose(): void {
-    ;(this.ptr as unknown as ShaderPtr).deleteLater()
+    this.ptr.deleteLater()
     super.dispose()
   }
 }

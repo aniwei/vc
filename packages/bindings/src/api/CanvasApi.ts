@@ -7,12 +7,32 @@ export class CanvasApi extends Api {
     this.invoke('Canvas_clear', canvas, argb >>> 0)
   }
 
+  getSaveCount(canvas: Ptr): number {
+    return this.invoke('Canvas_getSaveCount', canvas) | 0
+  }
+
+  saveLayer(
+    canvas: Ptr,
+    l: number,
+    t: number,
+    r: number,
+    b: number,
+    hasBounds: boolean,
+    paint: Ptr,
+  ): number {
+    return this.invoke('Canvas_saveLayer', canvas, +l, +t, +r, +b, hasBounds ? 1 : 0, paint >>> 0) | 0
+  }
+
   save(canvas: Ptr): number {
     return this.invoke('Canvas_save', canvas) | 0
   }
 
   restore(canvas: Ptr): void {
     this.invoke('Canvas_restore', canvas)
+  }
+
+  restoreToCount(canvas: Ptr, saveCount: number): void {
+    this.invoke('Canvas_restoreToCount', canvas, saveCount | 0)
   }
 
   translate(canvas: Ptr, dx: number, dy: number): void {
@@ -25,6 +45,28 @@ export class CanvasApi extends Api {
 
   rotate(canvas: Ptr, degrees: number): void {
     this.invoke('Canvas_rotate', canvas, +degrees)
+  }
+
+  drawOval(canvas: Ptr, l: number, t: number, r: number, b: number, paint: Ptr): void {
+    this.invoke('Canvas_drawOval', canvas, +l, +t, +r, +b, paint)
+  }
+
+  drawArc(
+    canvas: Ptr,
+    l: number,
+    t: number,
+    r: number,
+    b: number,
+    startAngle: number,
+    sweepAngle: number,
+    useCenter: boolean,
+    paint: Ptr,
+  ): void {
+    this.invoke('Canvas_drawArc', canvas, +l, +t, +r, +b, +startAngle, +sweepAngle, useCenter ? 1 : 0, paint)
+  }
+
+  drawPaint(canvas: Ptr, paint: Ptr): void {
+    this.invoke('Canvas_drawPaint', canvas, paint)
   }
 
   concat(canvas: Ptr, m9Ptr: Ptr): void {

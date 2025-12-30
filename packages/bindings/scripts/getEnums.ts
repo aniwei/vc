@@ -92,6 +92,16 @@ async function main() {
   js.push(`  Intersect = ${clipOpIntersect},`)
   js.push('}')
 
+  // Clip is a framework-level enum (not a Sk* wasm-exported enum).
+  // Keep numeric values aligned with Flutter/engine conventions.
+  js.push('')
+  js.push('export enum Clip {')
+  js.push('  None = 0,')
+  js.push('  HardEdge = 1,')
+  js.push('  AntiAlias = 2,')
+  js.push('  AntiAliasWithSaveLayer = 3,')
+  js.push('}')
+
   js.push('')
   js.push('export enum TextDirection {')
   js.push(`  LTR = ${textDirectionLtr},`)

@@ -37,8 +37,8 @@ export class ImagePtr extends Ptr {
 
   delete(): void {
     if (!this.isDeleted()) {
-      CanvasKitApi.Image.delete(this.ptr)
-      this.ptr = -1
+      CanvasKitApi.Image.delete(this.raw)
+      this.raw = -1
     }
   }
 
@@ -47,25 +47,25 @@ export class ImagePtr extends Ptr {
   }
 
   clone(): ImagePtr {
-    return new ImagePtr(this.ptr)
+    return new ImagePtr(this.raw)
   }
 
   isAliasOf(other: any): boolean {
-    return other instanceof ImagePtr && this.ptr === other.ptr
+    return other instanceof ImagePtr && this.raw === other.raw
   }
 
   isDeleted(): boolean {
-    return this.ptr === -1
+    return this.raw === -1
   }
 
   width(): number {
     invariant(!this.isDeleted(), 'ImagePtr is deleted')
-    return CanvasKitApi.Image.width(this.ptr) | 0
+    return CanvasKitApi.Image.width(this.raw) | 0
   }
 
   height(): number {
     invariant(!this.isDeleted(), 'ImagePtr is deleted')
-    return CanvasKitApi.Image.height(this.ptr) | 0
+    return CanvasKitApi.Image.height(this.raw) | 0
   }
 
   readPixelsRgba8888(x: number, y: number, w: number, h: number): Uint8Array {
@@ -75,7 +75,7 @@ export class ImagePtr extends Ptr {
     const dst = CanvasKitApi.malloc(byteLen)
 
     try {
-      const ok = CanvasKitApi.Image.readPixelsRgba8888(this.ptr, x | 0, y | 0, w | 0, h | 0, dst, (w | 0) * 4)
+      const ok = CanvasKitApi.Image.readPixelsRgba8888(this.raw, x | 0, y | 0, w | 0, h | 0, dst, (w | 0) * 4)
       if (!ok) return new Uint8Array()
       return readU8Copy(dst, byteLen)
     } finally {
@@ -85,7 +85,7 @@ export class ImagePtr extends Ptr {
 
   encodeToPngBytes(): Uint8Array {
     invariant(!this.isDeleted(), 'ImagePtr is deleted')
-    const dataPtr = CanvasKitApi.Image.encodeToPng(this.ptr)
+    const dataPtr = CanvasKitApi.Image.encodeToPng(this.raw)
     return encodeDataToBytes(dataPtr)
   }
 }
@@ -103,24 +103,24 @@ export class Image extends ManagedObj {
     throw new Error('Image cannot be resurrected')
   }
 
-  get raw(): ImagePtr {
-    return this.ptr as unknown as ImagePtr
+  get ptr(): ImagePtr {
+    return super.ptr as ImagePtr
   }
 
   get width(): number {
-    return this.raw.width()
+    return this.ptr.width()
   }
 
   get height(): number {
-    return this.raw.height()
+    return this.ptr.height()
   }
 
   readPixelsRgba8888(x: number, y: number, w: number, h: number): Uint8Array {
-    return this.raw.readPixelsRgba8888(x, y, w, h)
+    return this.ptr.readPixelsRgba8888(x, y, w, h)
   }
 
   encodeToPngBytes(): Uint8Array {
-    return this.raw.encodeToPngBytes()
+    return this.ptr.encodeToPngBytes()
   }
 
   dispose(): void {

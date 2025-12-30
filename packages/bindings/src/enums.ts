@@ -34,6 +34,13 @@ export enum ClipOp {
   Intersect = 1,
 }
 
+export enum Clip {
+  None = 0,
+  HardEdge = 1,
+  AntiAlias = 2,
+  AntiAliasWithSaveLayer = 3,
+}
+
 export enum TextDirection {
   LTR = 1,
   RTL = 0,

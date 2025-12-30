@@ -22,11 +22,11 @@ abstract class Eq<T extends Eq<T>> {
 export abstract class Ptr extends Raw<Ptr> {
   #ptr: number
 
-  get ptr (): number {
+  get raw (): number {
     return this.#ptr
   }
 
-  set ptr (ptr: number) {
+  set raw (ptr: number) {
     this.#ptr = ptr
   }
 
@@ -74,6 +74,11 @@ export class ManagedObjRegistry {
 }
 
 export abstract class ManagedObj extends Eq<ManagedObj> {
+  get raw () {
+    invariant(this.#ptr !== null, `The "ptr" cannot be null.`)
+    return this.#ptr.raw
+  }
+
   // => ptr
   get ptr () {
     invariant(this.#ptr !== null, `The "ptr" cannot be null.`)

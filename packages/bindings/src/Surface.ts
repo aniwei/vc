@@ -40,8 +40,8 @@ export class SurfacePtr extends Ptr {
 
   delete(): void {
     if (!this.isDeleted()) {
-      CanvasKitApi.Surface.delete(this.ptr)
-      this.ptr = -1
+      CanvasKitApi.Surface.delete(this.raw)
+      this.raw = -1
     }
   }
 
@@ -50,40 +50,40 @@ export class SurfacePtr extends Ptr {
   }
 
   clone(): SurfacePtr {
-    return new SurfacePtr(this.ptr)
+    return new SurfacePtr(this.raw)
   }
 
   isAliasOf(other: any): boolean {
-    return other instanceof SurfacePtr && this.ptr === other.ptr
+    return other instanceof SurfacePtr && this.raw === other.raw
   }
 
   isDeleted(): boolean {
-    return this.ptr === -1
+    return this.raw === -1
   }
 
   getCanvas(): Canvas {
     invariant(!this.isDeleted(), 'SurfacePtr is deleted')
-    return new Canvas(new CanvasPtr(CanvasKitApi.Surface.getCanvas(this.ptr)))
+    return new Canvas(new CanvasPtr(CanvasKitApi.Surface.getCanvas(this.raw)))
   }
 
   makeImageSnapshot(): ImagePtr {
     invariant(!this.isDeleted(), 'SurfacePtr is deleted')
-    return new ImagePtr(CanvasKitApi.Surface.makeImageSnapshot(this.ptr))
+    return new ImagePtr(CanvasKitApi.Surface.makeImageSnapshot(this.raw))
   }
 
   flush(): void {
     invariant(!this.isDeleted(), 'SurfacePtr is deleted')
-    CanvasKitApi.Surface.flush(this.ptr)
+    CanvasKitApi.Surface.flush(this.raw)
   }
 
   width(): number {
     invariant(!this.isDeleted(), 'SurfacePtr is deleted')
-    return CanvasKitApi.Surface.width(this.ptr) | 0
+    return CanvasKitApi.Surface.width(this.raw) | 0
   }
 
   height(): number {
     invariant(!this.isDeleted(), 'SurfacePtr is deleted')
-    return CanvasKitApi.Surface.height(this.ptr) | 0
+    return CanvasKitApi.Surface.height(this.raw) | 0
   }
 
   readPixelsRgba8888(x: number, y: number, w: number, h: number): Uint8Array {
@@ -93,7 +93,7 @@ export class SurfacePtr extends Ptr {
     const dst = CanvasKitApi.malloc(byteLen)
 
     try {
-      const ok = CanvasKitApi.Surface.readPixelsRgba8888(this.ptr, x | 0, y | 0, w | 0, h | 0, dst, (w | 0) * 4)
+      const ok = CanvasKitApi.Surface.readPixelsRgba8888(this.raw, x | 0, y | 0, w | 0, h | 0, dst, (w | 0) * 4)
       if (!ok) return new Uint8Array()
       return readU8Copy(dst, byteLen)
     } finally {
@@ -103,7 +103,7 @@ export class SurfacePtr extends Ptr {
 
   encodeToPngBytes(): Uint8Array {
     invariant(!this.isDeleted(), 'SurfacePtr is deleted')
-    const dataPtr = CanvasKitApi.Surface.encodeToPng(this.ptr)
+    const dataPtr = CanvasKitApi.Surface.encodeToPng(this.raw)
     return encodeDataToBytes(dataPtr)
   }
 }
@@ -125,8 +125,8 @@ export class Surface extends ManagedObj {
     throw new Error('Surface cannot be resurrected')
   }
 
-  get raw(): SurfacePtr {
-    return this.ptr as unknown as SurfacePtr
+  get ptr(): SurfacePtr {
+    return super.ptr as SurfacePtr
   }
 
   get canvas(): Canvas {
@@ -135,36 +135,36 @@ export class Surface extends ManagedObj {
 
   getCanvas(): Canvas {
     // Canvas is non-owning; Surface owns it.
-    return this.raw.getCanvas()
+    return this.ptr.getCanvas()
   }
 
   makeImageSnapshot(): Image {
-    return new Image(this.raw.makeImageSnapshot())
+    return new Image(this.ptr.makeImageSnapshot())
   }
 
   flush(): this {
-    this.raw.flush()
+    this.ptr.flush()
     return this
   }
 
   get width(): number {
-    return this.raw.width()
+    return this.ptr.width()
   }
 
   get height(): number {
-    return this.raw.height()
+    return this.ptr.height()
   }
 
   readPixelsRgba8888(x: number, y: number, w: number, h: number): Uint8Array {
-    return this.raw.readPixelsRgba8888(x, y, w, h)
+    return this.ptr.readPixelsRgba8888(x, y, w, h)
   }
 
   encodeToPngBytes(): Uint8Array {
-    return this.raw.encodeToPngBytes()
+    return this.ptr.encodeToPngBytes()
   }
 
   dispose(): void {
-    ;(this.ptr as unknown as SurfacePtr).deleteLater()
+    this.ptr.deleteLater()
     super.dispose()
   }
 }

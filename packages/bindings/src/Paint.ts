@@ -12,8 +12,8 @@ class PaintPtr extends Ptr {
 
   delete(): void {
     if (!this.isDeleted()) {
-      CanvasKitApi.Paint.delete(this.ptr)
-      this.ptr = -1
+      CanvasKitApi.Paint.delete(this.raw)
+      this.raw = -1
     }
   }
 
@@ -22,65 +22,70 @@ class PaintPtr extends Ptr {
   }
 
   clone(): PaintPtr {
-    return new PaintPtr(this.ptr)
+    return new PaintPtr(this.raw)
   }
 
   isAliasOf(other: any): boolean {
-    return other instanceof PaintPtr && this.ptr === other.ptr
+    return other instanceof PaintPtr && this.raw === other.raw
   }
 
   isDeleted(): boolean {
-    return this.ptr === -1
+    return this.raw === -1
   }
 
   setColor(argb: number): void {
     invariant(!this.isDeleted(), 'PaintPtr is deleted')
-    CanvasKitApi.Paint.setColor(this.ptr, argb >>> 0)
+    CanvasKitApi.Paint.setColor(this.raw, argb >>> 0)
   }
 
   setAntiAlias(aa: boolean): void {
     invariant(!this.isDeleted(), 'PaintPtr is deleted')
-    CanvasKitApi.Paint.setAntiAlias(this.ptr, aa)
+    CanvasKitApi.Paint.setAntiAlias(this.raw, aa)
   }
 
   setStyle(style: PaintStyle): void {
     invariant(!this.isDeleted(), 'PaintPtr is deleted')
-    CanvasKitApi.Paint.setStyle(this.ptr, style)
+    CanvasKitApi.Paint.setStyle(this.raw, style)
   }
 
   setStrokeWidth(width: number): void {
     invariant(!this.isDeleted(), 'PaintPtr is deleted')
-    CanvasKitApi.Paint.setStrokeWidth(this.ptr, +width)
+    CanvasKitApi.Paint.setStrokeWidth(this.raw, +width)
   }
 
   setStrokeCap(cap: StrokeCap): void {
     invariant(!this.isDeleted(), 'PaintPtr is deleted')
-    CanvasKitApi.Paint.setStrokeCap(this.ptr, cap)
+    CanvasKitApi.Paint.setStrokeCap(this.raw, cap)
   }
 
   setStrokeJoin(join: StrokeJoin): void {
     invariant(!this.isDeleted(), 'PaintPtr is deleted')
-    CanvasKitApi.Paint.setStrokeJoin(this.ptr, join)
+    CanvasKitApi.Paint.setStrokeJoin(this.raw, join)
   }
 
   setAlphaf(a: number): void {
     invariant(!this.isDeleted(), 'PaintPtr is deleted')
-    CanvasKitApi.Paint.setAlphaf(this.ptr, +a)
+    CanvasKitApi.Paint.setAlphaf(this.raw, +a)
   }
 
   setBlendMode(mode: number): void {
     invariant(!this.isDeleted(), 'PaintPtr is deleted')
-    CanvasKitApi.Paint.setBlendMode(this.ptr, mode | 0)
+    CanvasKitApi.Paint.setBlendMode(this.raw, mode | 0)
   }
 
   setShader(shader: number): void {
     invariant(!this.isDeleted(), 'PaintPtr is deleted')
-    CanvasKitApi.Paint.setShader(this.ptr, shader)
+    CanvasKitApi.Paint.setShader(this.raw, shader)
   }
 
   setColorFilter(colorFilter: number): void {
     invariant(!this.isDeleted(), 'PaintPtr is deleted')
-    CanvasKitApi.Paint.setColorFilter(this.ptr, colorFilter)
+    CanvasKitApi.Paint.setColorFilter(this.raw, colorFilter)
+  }
+
+  setPathEffect(pathEffect: number): void {
+    invariant(!this.isDeleted(), 'PaintPtr is deleted')
+    CanvasKitApi.Paint.setPathEffect(this.raw, pathEffect)
   }
 }
 
@@ -89,66 +94,71 @@ export class Paint extends ManagedObj {
     super(new PaintPtr())
   }
 
+  get ptr(): PaintPtr {
+    return super.ptr as PaintPtr
+  }
+
   resurrect(): Ptr {
     return new PaintPtr()
   }
 
-  get raw(): PaintPtr {
-    return this.ptr as unknown as PaintPtr
-  }
-
   setColor(argb: number): this {
-    this.raw.setColor(argb)
+    this.ptr.setColor(argb)
     return this
   }
 
   setAntiAlias(aa: boolean): this {
-    this.raw.setAntiAlias(aa)
+    this.ptr.setAntiAlias(aa)
     return this
   }
 
   setStyle(style: PaintStyle): this {
-    this.raw.setStyle(style)
+    this.ptr.setStyle(style)
     return this
   }
 
   setStrokeWidth(width: number): this {
-    this.raw.setStrokeWidth(width)
+    this.ptr.setStrokeWidth(width)
     return this
   }
 
   setStrokeCap(cap: StrokeCap): this {
-    this.raw.setStrokeCap(cap)
+    this.ptr.setStrokeCap(cap)
     return this
   }
 
   setStrokeJoin(join: StrokeJoin): this {
-    this.raw.setStrokeJoin(join)
+    this.ptr.setStrokeJoin(join)
     return this
   }
 
   setAlphaf(a: number): this {
-    this.raw.setAlphaf(a)
+    this.ptr.setAlphaf(a)
     return this
   }
 
   setBlendMode(mode: number): this {
-    this.raw.setBlendMode(mode)
+    this.ptr.setBlendMode(mode)
     return this
   }
 
   setShader(shader: number): this {
-    this.raw.setShader(shader)
+    this.ptr.setShader(shader)
     return this
   }
 
   setColorFilter(colorFilter: number): this {
-    this.raw.setColorFilter(colorFilter)
+    this.ptr.setColorFilter(colorFilter)
+    return this
+  }
+
+  setPathEffect(pathEffect: number): this {
+    this.ptr.setPathEffect(pathEffect)
     return this
   }
 
   dispose(): void {
-    ;(this.ptr as unknown as PaintPtr).deleteLater()
+    this.ptr.deleteLater()
     super.dispose()
   }
 }

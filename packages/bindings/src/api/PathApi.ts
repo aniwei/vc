@@ -31,6 +31,10 @@ export class PathApi extends Api {
     this.invoke('Path_reset', ptr)
   }
 
+  getBounds(ptr: Ptr, outLTRB4Ptr: Ptr): void {
+    this.invoke('Path_getBounds', ptr, outLTRB4Ptr >>> 0)
+  }
+
   quadTo(ptr: Ptr, x1: number, y1: number, x2: number, y2: number): void {
     this.invoke('Path_quadTo', ptr, +x1, +y1, +x2, +y2)
   }
@@ -96,5 +100,9 @@ export class PathApi extends Api {
 
   transform(skPath: Ptr, m9Ptr: Ptr): void {
     this.invoke('Path_transform', skPath, m9Ptr >>> 0)
+  }
+
+  getSkPathBounds(skPath: Ptr, outLTRB4Ptr: Ptr): void {
+    this.invoke('SkPath_getBounds', skPath, outLTRB4Ptr >>> 0)
   }
 }

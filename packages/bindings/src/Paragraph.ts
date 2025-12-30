@@ -21,8 +21,8 @@ class ParagraphPtr extends Ptr {
 
   delete(): void {
     if (!this.isDeleted()) {
-      CanvasKitApi.Paragraph.delete(this.ptr)
-      this.ptr = -1
+      CanvasKitApi.Paragraph.delete(this.raw)
+      this.raw = -1
     }
   }
 
@@ -31,45 +31,45 @@ class ParagraphPtr extends Ptr {
   }
 
   clone(): ParagraphPtr {
-    return new ParagraphPtr(this.ptr)
+    return new ParagraphPtr(this.raw)
   }
 
   isAliasOf(other: any): boolean {
-    return other instanceof ParagraphPtr && this.ptr === other.ptr
+    return other instanceof ParagraphPtr && this.raw === other.raw
   }
 
   isDeleted(): boolean {
-    return this.ptr === -1
+    return this.raw === -1
   }
 
   layout(width: number): void {
     invariant(!this.isDeleted(), 'ParagraphPtr is deleted')
-    CanvasKitApi.Paragraph.layout(this.ptr, +width)
+    CanvasKitApi.Paragraph.layout(this.raw, +width)
   }
 
   getHeight(): number {
     invariant(!this.isDeleted(), 'ParagraphPtr is deleted')
-    return CanvasKitApi.Paragraph.getHeight(this.ptr)
+    return CanvasKitApi.Paragraph.getHeight(this.raw)
   }
 
   getMaxWidth(): number {
     invariant(!this.isDeleted(), 'ParagraphPtr is deleted')
-    return CanvasKitApi.Paragraph.getMaxWidth(this.ptr)
+    return CanvasKitApi.Paragraph.getMaxWidth(this.raw)
   }
 
   getMinIntrinsicWidth(): number {
     invariant(!this.isDeleted(), 'ParagraphPtr is deleted')
-    return CanvasKitApi.Paragraph.getMinIntrinsicWidth(this.ptr)
+    return CanvasKitApi.Paragraph.getMinIntrinsicWidth(this.raw)
   }
 
   getMaxIntrinsicWidth(): number {
     invariant(!this.isDeleted(), 'ParagraphPtr is deleted')
-    return CanvasKitApi.Paragraph.getMaxIntrinsicWidth(this.ptr)
+    return CanvasKitApi.Paragraph.getMaxIntrinsicWidth(this.raw)
   }
 
   getLongestLine(): number {
     invariant(!this.isDeleted(), 'ParagraphPtr is deleted')
-    return CanvasKitApi.Paragraph.getLongestLine(this.ptr)
+    return CanvasKitApi.Paragraph.getLongestLine(this.raw)
   }
 }
 
@@ -133,41 +133,41 @@ export class Paragraph extends ManagedObj {
     super(ptr)
   }
 
+  get ptr(): ParagraphPtr {
+    return super.ptr as ParagraphPtr
+  }
+
   resurrect(): Ptr {
     throw new Error('Paragraph cannot be resurrected')
   }
 
-  get raw(): ParagraphPtr {
-    return this.ptr as unknown as ParagraphPtr
-  }
-
   layout(width: number): this {
-    this.raw.layout(width)
+    this.ptr.layout(width)
     return this
   }
 
   get height(): number {
-    return this.raw.getHeight()
+    return this.ptr.getHeight()
   }
 
   get maxWidth(): number {
-    return this.raw.getMaxWidth()
+    return this.ptr.getMaxWidth()
   }
 
   get minIntrinsicWidth(): number {
-    return this.raw.getMinIntrinsicWidth()
+    return this.ptr.getMinIntrinsicWidth()
   }
 
   get maxIntrinsicWidth(): number {
-    return this.raw.getMaxIntrinsicWidth()
+    return this.ptr.getMaxIntrinsicWidth()
   }
 
   get longestLine(): number {
-    return this.raw.getLongestLine()
+    return this.ptr.getLongestLine()
   }
 
   dispose(): void {
-    ;(this.ptr as unknown as ParagraphPtr).deleteLater()
+    this.ptr.deleteLater()
     super.dispose()
   }
 }

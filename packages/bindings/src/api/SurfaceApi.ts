@@ -3,7 +3,7 @@ import { Api } from './Api'
 
 export class SurfaceApi extends Api {
   makeCanvas(w: number, h: number): Ptr {
-    return (this.maybeInvoke('MakeCanvasSurface', w | 0, h | 0) as Ptr | null) ?? 0
+    return (this.invoke('MakeCanvasSurface', w | 0, h | 0) as Ptr | null) ?? 0
   }
 
   makeSw(w: number, h: number): Ptr {

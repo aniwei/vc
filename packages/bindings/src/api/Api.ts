@@ -1,33 +1,20 @@
-import type { Ptr } from '../types'
-
-export type ExportResolver = (name: string) => ((...args: any[]) => any) | null
+import { WasmApi } from '../WasmApi'
 
 export abstract class Api {
-  protected readonly resolver: ExportResolver
+  #wasmApi: WasmApi
 
-  constructor(resolver: ExportResolver) {
-    this.resolver = resolver
+  constructor(wasmApi: WasmApi) {
+    this.#wasmApi = wasmApi
   }
 
-  invoke<T = any>(name: string, ...args: any[]): T {
-    const fn = this.resolver(name)
-    if (!fn) {
-      throw new Error(`CanvasKit wasm export not found: ${name}`)
+  invoke(funcName: string, ...args: any[]): any {
+    const func = this.#wasmApi.exports.get(funcName)
+    if (!func) {
+      throw new Error(`Function ${funcName} not found in Wasm exports`)
     }
-    return fn(...args) as T
+    return func(...args)
   }
 
-  maybeInvoke<T = any>(name: string, ...args: any[]): T | null {
-    const fn = this.resolver(name)
-    if (!fn) {
-      return null
-    }
-    return fn(...args) as T
-  }
-
-  hasExport(name: string): boolean {
-    return !!this.resolver(name)
-  }
+  
 }
 
-export type { Ptr }

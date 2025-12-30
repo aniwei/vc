@@ -3,11 +3,12 @@ export * from './Paint'
 export * from './Canvas'
 export * from './Image'
 export * from './Surface'
-export * from './Paragraph'
+export * from './Path'
 export * from './ParagraphBuilder'
 export * from './Shader'
+export * from './PathEffect'
 
-export * from './Geometry'
+export * from 'geometry'
 
 export * from './enums'
 

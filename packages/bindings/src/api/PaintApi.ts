@@ -62,4 +62,8 @@ export class PaintApi extends Api {
   setColorFilter(paint: Ptr, colorFilter: Ptr): void {
     this.invoke('Paint_setColorFilter', paint, colorFilter)
   }
+
+  setPathEffect(paint: Ptr, pathEffect: Ptr): void {
+    this.invoke('Paint_setPathEffect', paint, pathEffect)
+  }
 }
