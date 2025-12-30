@@ -1,11 +1,10 @@
+import { Eq, DebugDescription } from 'shared'
 import { Size } from './Size'
 import { Rect } from './Rect'
 
-declare const require: (id: string) => unknown
-
-export class Offset {
-  static readonly ZERO = new Offset(0, 0)
-  static readonly INFINITE = new Offset(Infinity, Infinity)
+export class Offset implements Eq<Offset>, DebugDescription {
+  static readonly Zero = new Offset(0, 0)
+  static readonly Infinite = new Offset(Infinity, Infinity)
 
   static zero(): Offset {
     return new Offset(0, 0)
@@ -18,11 +17,11 @@ export class Offset {
 
     if (b === null) {
       if (a === null) return null
-      return a.multiply(1.0 - t)
+      return a.mul(1.0 - t)
     }
 
     if (a === null) {
-      return b.multiply(t)
+      return b.mul(t)
     }
 
     return new Offset(
@@ -63,19 +62,35 @@ export class Offset {
     return new Offset(this.dx + other.dx, this.dy + other.dy)
   }
 
-  subtract(other: Offset): Offset {
+  sub(other: Offset): Offset {
     return new Offset(this.dx - other.dx, this.dy - other.dy)
   }
 
-  multiply(operand: number): Offset {
+  mul(operand: number): Offset {
     return new Offset(this.dx * operand, this.dy * operand)
   }
 
-  divide(operand: number): Offset {
+  div(operand: number): Offset {
     return new Offset(this.dx / operand, this.dy / operand)
   }
 
   and(size: Size): Rect {    
     return Rect.fromLTWH(this.dx, this.dy, size.width, size.height)
+  }
+
+  clone(): Offset {
+    return new Offset(this.dx, this.dy)
+  }
+
+  eq(other: Offset | null): boolean {
+    return !!other && other.dx === this.dx && other.dy === this.dy
+  }
+
+  notEq(other: Offset | null): boolean {
+    return !this.eq(other)
+  }
+
+  debugDescription(): string {
+    return `Offset(${this.dx}, ${this.dy})`
   }
 }

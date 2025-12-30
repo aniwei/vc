@@ -1,8 +1,8 @@
+import { Eq, DebugDescription } from 'shared'
 import { Point } from './Point'
 
-export class Radius extends Point {
-  static readonly ZERO = new Radius(0, 0)
-  static readonly Zero = Radius.ZERO
+export class Radius extends Point implements Eq<Radius>, DebugDescription {
+  static readonly Zero = new Radius(0, 0)
 
   static circular(radius: number): Radius {
     return new Radius(radius, radius)
@@ -14,8 +14,8 @@ export class Radius extends Point {
 
   static lerp(a: Radius | null, b: Radius | null, t: number): Radius | null {
     if (a === null && b === null) return null
-    a ??= Radius.ZERO
-    b ??= Radius.ZERO
+    a ??= Radius.Zero
+    b ??= Radius.Zero
     return new Radius(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t)
   }
 
@@ -51,20 +51,15 @@ export class Radius extends Point {
     return new Radius(this.x, this.y)
   }
 
-  // Flutter-ish / at/geometry aliases used across the repo.
-  subtract(other: Radius): Radius {
-    return this.sub(other)
+  eq(other: Radius | null): boolean {
+    return !!other && other.x === this.x && other.y === this.y
   }
 
-  multiply(scale: number): Radius {
-    return this.mul(scale)
+  notEq(other: Radius | null): boolean {
+    return !this.eq(other)
   }
 
-  divide(scale: number): Radius {
-    return this.div(scale)
-  }
-
-  modulo(divisor: number): Radius {
-    return this.mod(divisor)
+  debugDescription(): string {
+    return `Radius(${this.x}, ${this.y})`
   }
 }

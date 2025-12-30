@@ -18,10 +18,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@at/basic": "workspace:*",
-    "@at/engine": "workspace:*",
-    "@at/geometry": "workspace:*",
-    "@at/utils": "workspace:*"
+    
   },
   "devDependencies": {
     "typescript": "^5.0.0"

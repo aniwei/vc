@@ -499,8 +499,36 @@ int Canvas_save(void* canvas) {
   return static_cast<SkCanvas*>(canvas)->save();
 }
 
+int Canvas_getSaveCount(void* canvas) {
+  if (!canvas) {
+    return 0;
+  }
+  return static_cast<SkCanvas*>(canvas)->getSaveCount();
+}
+
+int Canvas_saveLayer(void* canvas, float left, float top, float right, float bottom, int hasBounds, void* paint) {
+  if (!canvas) {
+    return 0;
+  }
+
+  const SkPaint* p = paint ? static_cast<SkPaint*>(paint) : nullptr;
+  if (!hasBounds) {
+    return static_cast<SkCanvas*>(canvas)->saveLayer(nullptr, p);
+  }
+
+  const SkRect rect = SkRect::MakeLTRB(left, top, right, bottom);
+  return static_cast<SkCanvas*>(canvas)->saveLayer(&rect, p);
+}
+
 void Canvas_restore(void* canvas) {
   static_cast<SkCanvas*>(canvas)->restore();
+}
+
+void Canvas_restoreToCount(void* canvas, int saveCount) {
+  if (!canvas) {
+    return;
+  }
+  static_cast<SkCanvas*>(canvas)->restoreToCount(saveCount);
 }
 
 void Canvas_translate(void* canvas, float dx, float dy) {
@@ -513,6 +541,38 @@ void Canvas_scale(void* canvas, float sx, float sy) {
 
 void Canvas_rotate(void* canvas, float degrees) {
   static_cast<SkCanvas*>(canvas)->rotate(degrees);
+}
+
+void Canvas_drawOval(void* canvas, float left, float top, float right, float bottom, void* paint) {
+  if (!canvas || !paint) {
+    return;
+  }
+  const SkRect rect = SkRect::MakeLTRB(left, top, right, bottom);
+  static_cast<SkCanvas*>(canvas)->drawOval(rect, *static_cast<SkPaint*>(paint));
+}
+
+void Canvas_drawArc(
+  void* canvas,
+  float left,
+  float top,
+  float right,
+  float bottom,
+  float startAngle,
+  float sweepAngle,
+  int useCenter,
+  void* paint) {
+  if (!canvas || !paint) {
+    return;
+  }
+  const SkRect oval = SkRect::MakeLTRB(left, top, right, bottom);
+  static_cast<SkCanvas*>(canvas)->drawArc(oval, startAngle, sweepAngle, useCenter != 0, *static_cast<SkPaint*>(paint));
+}
+
+void Canvas_drawPaint(void* canvas, void* paint) {
+  if (!canvas || !paint) {
+    return;
+  }
+  static_cast<SkCanvas*>(canvas)->drawPaint(*static_cast<SkPaint*>(paint));
 }
 
 void Canvas_concat(void* canvas, const float* m9) {
@@ -1446,6 +1506,26 @@ void Path_arcToOval(
   static_cast<SkPathBuilder*>(path)->arcTo(oval, startAngleDeg, sweepAngleDeg, forceMoveTo != 0);
 }
 
+void Path_getBounds(void* path, float* outLTRB4) {
+  if (!outLTRB4) {
+    return;
+  }
+  if (!path) {
+    outLTRB4[0] = 0;
+    outLTRB4[1] = 0;
+    outLTRB4[2] = 0;
+    outLTRB4[3] = 0;
+    return;
+  }
+
+  SkPathBuilder* builder = static_cast<SkPathBuilder*>(path);
+  const SkRect r = builder->snapshot().getBounds();
+  outLTRB4[0] = r.fLeft;
+  outLTRB4[1] = r.fTop;
+  outLTRB4[2] = r.fRight;
+  outLTRB4[3] = r.fBottom;
+}
+
 // Snapshot PathBuilder to an SkPath*. Caller must DeleteSkPath().
 void* Path_snapshot(void* path) {
   if (!path) {
@@ -1465,6 +1545,26 @@ void Path_transform(void* skPath, const float* m9) {
   }
   SkPath* p = static_cast<SkPath*>(skPath);
   *p = p->makeTransform(MatrixFromPtr(m9));
+}
+
+void SkPath_getBounds(void* skPath, float* outLTRB4) {
+  if (!outLTRB4) {
+    return;
+  }
+  if (!skPath) {
+    outLTRB4[0] = 0;
+    outLTRB4[1] = 0;
+    outLTRB4[2] = 0;
+    outLTRB4[3] = 0;
+    return;
+  }
+
+  SkPath* p = static_cast<SkPath*>(skPath);
+  const SkRect r = p->getBounds();
+  outLTRB4[0] = r.fLeft;
+  outLTRB4[1] = r.fTop;
+  outLTRB4[2] = r.fRight;
+  outLTRB4[3] = r.fBottom;
 }
 
 }  // extern "C"

@@ -1,3 +1,5 @@
+import { Eq, DebugDescription } from 'shared'
+
 import { Offset } from './Offset'
 import { Size } from './Size'
 
@@ -10,7 +12,22 @@ export interface LTRB extends Array<number> {
 
 export type LTRBRect = [number, number, number, number]
 
-export class Rect {
+export class Rect implements Eq<Rect>, DebugDescription {
+  static zero(): Rect {
+    return Rect.Zero.clone()
+  }
+
+  static largest(): Rect {
+    return Rect.Largest.clone()
+  }
+
+  static readonly Zero: Rect = new Rect(0, 0, 0, 0)
+  static readonly Largest: Rect = new Rect(
+    -Number.MAX_VALUE / 2, 
+    -Number.MAX_VALUE / 2, 
+    Number.MAX_VALUE / 2, 
+    Number.MAX_VALUE / 2)
+
   static lerp(a: Rect | null, b: Rect | null, t: number): Rect | null {
     if (t === null || Number.isNaN(t)) {
       throw new Error('The argument "t" cannot be null or NaN.')
@@ -82,6 +99,34 @@ export class Rect {
     return Rect.fromLTWH(this.left, this.top, this.width - size.width, this.height - size.height)
   }
 
+  expandToInclude(rect: Rect): Rect {
+    return Rect.fromLTRB(
+      Math.min(this.left, rect.left),
+      Math.min(this.top, rect.top),
+      Math.max(this.right, rect.right),
+      Math.max(this.bottom, rect.bottom))
+  }
+
+  overlaps(rect: Rect): boolean {
+    if (this.right <= rect.left || rect.right <= this.left) {
+      return false
+    }
+
+    if (this.bottom <= rect.top || rect.bottom <= this.top) {
+      return false
+    }
+
+    return true
+  }
+
+  clone(): Rect {
+    return new Rect(this.left, this.top, this.right, this.bottom)
+  }
+
+  ltrb(): LTRB {
+    return [this.left, this.top, this.right, this.bottom]
+  }
+
   eq(other: Rect | null): boolean {
     return (
       !!other &&
@@ -92,7 +137,11 @@ export class Rect {
     )
   }
 
-  toLTRB(): LTRB {
-    return [this.left, this.top, this.right, this.bottom]
+  notEq(other: Rect | null): boolean {
+    return !this.eq(other)
+  } 
+
+  debugDescription(): string {
+    return `Rect(${this.left}, ${this.top}, ${this.right}, ${this.bottom})`
   }
 }

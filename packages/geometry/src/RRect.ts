@@ -1,7 +1,8 @@
+import { DebugDescription, Eq } from 'shared'
 import { Radius } from './Radius'
 import { Rect } from './Rect'
 
-export class RRect {
+export class RRect implements Eq<RRect>, DebugDescription {
   readonly left: number
   readonly top: number
   readonly right: number
@@ -34,10 +35,10 @@ export class RRect {
 
   static fromRectAndCorners(
     rect: Rect,
-    topLeft: Radius = Radius.ZERO,
-    topRight: Radius = Radius.ZERO,
-    bottomRight: Radius = Radius.ZERO,
-    bottomLeft: Radius = Radius.ZERO,
+    topLeft: Radius = Radius.Zero,
+    topRight: Radius = Radius.Zero,
+    bottomRight: Radius = Radius.Zero,
+    bottomLeft: Radius = Radius.Zero,
   ): RRect {
     return new RRect(
       rect.left,
@@ -47,8 +48,7 @@ export class RRect {
       topLeft,
       topRight,
       bottomRight,
-      bottomLeft,
-    )
+      bottomLeft)
   }
 
   static fromRectXY(rect: Rect, rx: number, ry: number): RRect {
@@ -68,7 +68,7 @@ export class RRect {
     return this.bottom - this.top
   }
 
-  get outerRect(): Rect {
+  get outer(): Rect {
     return Rect.fromLTRB(this.left, this.top, this.right, this.bottom)
   }
 
@@ -82,7 +82,18 @@ export class RRect {
       other.tlRadius.eq(this.tlRadius) &&
       other.trRadius.eq(this.trRadius) &&
       other.brRadius.eq(this.brRadius) &&
-      other.blRadius.eq(this.blRadius)
-    )
+      other.blRadius.eq(this.blRadius))
+  }
+
+  notEq(other: RRect | null): boolean {
+    return !this.eq(other)
+  }
+
+  debugDescription(): string {
+    return `RRect(${this.left}, ${this.top}, ${this.right}, ${this.bottom}, `
+      + `tlRadius: ${this.tlRadius.debugDescription()}, `
+      + `trRadius: ${this.trRadius.debugDescription()}, `
+      + `brRadius: ${this.brRadius.debugDescription()}, `
+      + `blRadius: ${this.blRadius.debugDescription()})`
   }
 }

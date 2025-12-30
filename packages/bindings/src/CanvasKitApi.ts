@@ -28,16 +28,11 @@ export type CanvasKit = WasmApi & {
   PathEffect: PathEffectApi
 }
 
-
-
-
-
-
-async function makeWasmApi(input: string): CanvasKit {
+async function makeWasmApi(input: string): Promise<CanvasKit> {
   const wasmApi = new WasmApi()
   await wasmApi.run(input, {}, 0)
 
-  const api = Object.create(wasmApi) as CanvasKit
+  const api = wasmApi as unknown as CanvasKit
 
   api.Path = new PathApi(wasmApi)
   api.Paint = new PaintApi(wasmApi)
@@ -65,8 +60,7 @@ async function ready(options: CanvasKitOptions): Promise<CanvasKit> {
     throw new Error('Expected options.uri, options.path, or options.wasmPath')
   }
 
-  const api = makeWasmApi(input)
-  return api
+  return await makeWasmApi(input)
 }
 
 export class CanvasKitApi {
@@ -147,39 +141,65 @@ export class CanvasKitApi {
     return this.#api.alloc(bytes)
   }
 
-  static heapU8(): Uint8Array {
+  // MDN DataView-style helpers (preferred)
+  static getUint8(byteOffset: Ptr): number {
     invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
-    return this.#api.heapU8()
+    return this.#api.getUint8(byteOffset)
   }
 
-  static heapU32(): Uint32Array {
+  static setUint8(byteOffset: Ptr, value: number): void {
     invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
-    return this.#api.heapU32()
+    this.#api.setUint8(byteOffset, value)
   }
 
-  static heapF32(): Float32Array {
+  static getUint32(byteOffset: Ptr, littleEndian: boolean = true): number {
     invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
-    return this.#api.heapF32()
+    return this.#api.getUint32(byteOffset, littleEndian)
   }
 
-  static readBytes(ptr: Ptr, len: number): Buffer {
+  static setUint32(byteOffset: Ptr, value: number, littleEndian: boolean = true): void {
     invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
-    return this.#api.readBytes(ptr, len)
+    this.#api.setUint32(byteOffset, value, littleEndian)
   }
 
-  static writeBytes(ptr: Ptr, buf: Uint8Array): void {
+  static getFloat32(byteOffset: Ptr, littleEndian: boolean = true): number {
     invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
-    this.#api.writeBytes(ptr, buf)
+    return this.#api.getFloat32(byteOffset, littleEndian)
   }
 
-  static writeU32Array(ptr: Ptr, arr: Uint32Array): void {
+  static setFloat32(byteOffset: Ptr, value: number, littleEndian: boolean = true): void {
     invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
-    this.#api.writeU32Array(ptr, arr)
+    this.#api.setFloat32(byteOffset, value, littleEndian)
   }
 
-  static writeF32Array(ptr: Ptr, arr: Float32Array): void {
+  static getBytes(byteOffset: Ptr, length: number): Uint8Array {
     invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
-    this.#api.writeF32Array(ptr, arr)
+    return this.#api.getBytes(byteOffset, length)
+  }
+
+  static setBytes(byteOffset: Ptr, bytes: ArrayLike<number> | Uint8Array): void {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    this.#api.setBytes(byteOffset, bytes)
+  }
+
+  static getUint32Array(byteOffset: Ptr, length: number): Uint32Array {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return this.#api.getUint32Array(byteOffset, length)
+  }
+
+  static setUint32Array(byteOffset: Ptr, values: ArrayLike<number> | Uint32Array): void {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    this.#api.setUint32Array(byteOffset, values)
+  }
+
+  static getFloat32Array(byteOffset: Ptr, length: number): Float32Array {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return this.#api.getFloat32Array(byteOffset, length)
+  }
+
+  static setFloat32Array(byteOffset: Ptr, values: ArrayLike<number> | Float32Array): void {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    this.#api.setFloat32Array(byteOffset, values)
   }
 
   static allocBytes(bytes: ArrayLike<number> | Uint8Array): Ptr {

@@ -1,5 +1,7 @@
-export class Point {
-  static readonly ZERO = new Point(0, 0)
+import { Eq, DebugDescription } from 'shared'
+
+export class Point implements Eq<Point>, DebugDescription {
+  static readonly Zero = new Point(0, 0)
 
   readonly x: number
   readonly y: number
@@ -11,10 +13,6 @@ export class Point {
 
   static of(x: number, y: number): Point {
     return new Point(x, y)
-  }
-
-  eq(other: Point | null): boolean {
-    return !!other && other.x === this.x && other.y === this.y
   }
 
   add(other: Point): Point {
@@ -39,5 +37,17 @@ export class Point {
 
   clone(): Point {
     return new Point(this.x, this.y)
+  }
+
+  eq(other: Point | null): boolean {
+    return !!other && other.x === this.x && other.y === this.y
+  }
+
+  notEq(other: Point | null): boolean {
+    return !this.eq(other)
+  }
+
+  debugDescription(): string {
+    return `Point(${this.x}, ${this.y})`
   }
 }

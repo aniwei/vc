@@ -4,7 +4,7 @@ import { Rect } from 'geometry'
 import { ManagedObj, ManagedObjRegistry, Ptr } from './ManagedObj'
 import { CanvasKitApi } from './CanvasKitApi'
 import type { PathFillType } from './enums'
-import { allocFloat32Array, free, readFloat32Array } from './wasm/memory'
+
 
 class PathPtr extends Ptr {
   constructor(ptr?: number) {
@@ -74,13 +74,16 @@ class PathPtr extends Ptr {
     invariant(!this.isDeleted(), 'PathPtr is deleted')
     invariant(CanvasKitApi.Path.hasExport('Path_getBounds'), 'CanvasKit wasm missing Path_getBounds; rebuild canvaskit.wasm')
 
-    const outPtr = allocFloat32Array([0, 0, 0, 0])
+
+    const outPtr = CanvasKitApi.malloc(4 * 4) as number
+    CanvasKitApi.setFloat32Array(outPtr >>> 0, [0, 0, 0, 0])
+    
     try {
       CanvasKitApi.Path.getBounds(this.raw, outPtr)
-      const r = readFloat32Array(outPtr, 4)
-      return Rect.fromLTRB(r[0], r[1], r[2], r[3])
+      const r = CanvasKitApi.getFloat32Array(outPtr >>> 0, 4)
+      return Rect.fromLTRB(r[0]!, r[1]!, r[2]!, r[3]!)
     } finally {
-      free(outPtr)
+      CanvasKitApi.free(outPtr >>> 0)
     }
   }
 
@@ -118,11 +121,13 @@ class PathPtr extends Ptr {
     invariant(pointCount > 0, 'addPolygon: pointCount must be > 0')
     invariant(pointsXY.length >= pointCount * 2, 'addPolygon: pointsXY length insufficient')
 
-    const pointsPtr = allocFloat32Array(pointsXY)
+    const pointsPtr = CanvasKitApi.malloc(pointCount * 2 * 4) as number
+    CanvasKitApi.setFloat32Array(pointsPtr >>> 0, pointsXY)
+
     try {
       CanvasKitApi.Path.addPolygon(this.raw, pointsPtr, pointCount | 0, close)
     } finally {
-      free(pointsPtr)
+      CanvasKitApi.free(pointsPtr >>> 0)
     }
   }
 
@@ -183,11 +188,14 @@ class SnapshotPathPtr extends Ptr {
     invariant(!this.isDeleted(), 'Path snapshot is deleted')
     invariant(m9.length === 9, `transform: expected 9 floats, got ${m9.length}`)
 
-    const mPtr = allocFloat32Array(m9)
+    // TODO
+    const mPtr = CanvasKitApi.malloc(9 * 4) as number
+    CanvasKitApi.setFloat32Array(mPtr >>> 0, m9)
+    
     try {
       CanvasKitApi.Path.transform(this.raw, mPtr)
     } finally {
-      free(mPtr)
+      CanvasKitApi.free(mPtr >>> 0)
     }
   }
 
@@ -195,13 +203,14 @@ class SnapshotPathPtr extends Ptr {
     invariant(!this.isDeleted(), 'Path snapshot is deleted')
     invariant(CanvasKitApi.Path.hasExport('SkPath_getBounds'), 'CanvasKit wasm missing SkPath_getBounds; rebuild canvaskit.wasm')
 
-    const outPtr = allocFloat32Array([0, 0, 0, 0])
+    const outPtr = CanvasKitApi.malloc(4 * 4) as number
+    CanvasKitApi.setFloat32Array(outPtr >>> 0, [0, 0, 0, 0])
     try {
       CanvasKitApi.Path.getSkPathBounds(this.raw, outPtr)
-      const r = readFloat32Array(outPtr, 4)
-      return Rect.fromLTRB(r[0], r[1], r[2], r[3])
+      const r = CanvasKitApi.getFloat32Array(outPtr >>> 0, 4)
+      return Rect.fromLTRB(r[0]!, r[1]!, r[2]!, r[3]!)
     } finally {
-      free(outPtr)
+      CanvasKitApi.free(outPtr >>> 0)
     }
   }
 }

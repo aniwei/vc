@@ -8,11 +8,11 @@ export abstract class Api {
   }
 
   invoke(funcName: string, ...args: any[]): any {
-    const func = this.#wasmApi.exports.get(funcName)
-    if (!func) {
-      throw new Error(`Function ${funcName} not found in Wasm exports`)
-    }
-    return func(...args)
+    return this.#wasmApi.invoke(funcName, ...args)
+  }
+
+  hasExport(name: string): boolean {
+    return this.#wasmApi.hasExport(name)
   }
 
   

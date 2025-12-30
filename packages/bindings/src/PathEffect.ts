@@ -2,7 +2,6 @@ import invariant from 'invariant'
 
 import { ManagedObj, ManagedObjRegistry, Ptr } from './ManagedObj'
 import { CanvasKitApi } from './CanvasKitApi'
-import { writeFloat32Array } from './wasm/memory'
 
 class PathEffectPtr extends Ptr {
   constructor(ptr?: number) {
@@ -42,7 +41,7 @@ export class PathEffect extends ManagedObj {
     const intervalsPtr = CanvasKitApi.malloc(bytes) as number
 
     try {
-      writeFloat32Array(intervalsPtr, intervals)
+      CanvasKitApi.setFloat32Array(intervalsPtr >>> 0, intervals)
       const pePtr = CanvasKitApi.PathEffect.makeDash(intervalsPtr >>> 0, count, phase) as number
       return new PathEffect(new PathEffectPtr(pePtr))
     } finally {

@@ -21,6 +21,9 @@
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.22.0",
+  "dependencies": {
+    "shared": "workspace:*"
+  },
   "devDependencies": {
     "typescript": "^5.0.0"
   }

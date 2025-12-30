@@ -26,7 +26,7 @@ COMPILE_FLAGS=("$@")
 echo "[1/2] Building Skia static wasm libs into: ${SKIA_BUILD_DIR}"
 (
   cd "${SKIA_DIR}"
-  BUILD_DIR="${SKIA_BUILD_DIR}" ./modules/canvaskit/compile.sh "${COMPILE_FLAGS[@]}"
+  BUILD_DIR="${SKIA_BUILD_DIR}" ./modules/canvaskit/compile.sh "${COMPILE_FLAGS[@]:-}"
 )
 
 echo "[2/2] Linking cheap-compatible no-glue wasm into: ${OUT_DIR}"

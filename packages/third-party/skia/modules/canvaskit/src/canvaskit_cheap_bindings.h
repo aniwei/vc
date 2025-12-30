@@ -73,32 +73,36 @@ void Path_cubicTo(void* path, float x1, float y1, float x2, float y2, float x3, 
 void Path_addRect(void* path, float left, float top, float right, float bottom);
 void Path_addCircle(void* path, float cx, float cy, float r);
 void Path_addOval(void* path, float left, float top, float right, float bottom, int dir, int startIndex);
-void Path_addRRectXY(void* path,
-                     float left,
-                     float top,
-                     float right,
-                     float bottom,
-                     float rx,
-                     float ry,
-                     int dir,
-                     int startIndex);
+void Path_addRRectXY(
+  void* path,
+  float left,
+  float top,
+  float right,
+  float bottom,
+  float rx,
+  float ry,
+  int dir,
+  int startIndex);
 void Path_addPolygon(void* path, const float* pointsXY, int pointCount, int close);
 void Path_addArc(void* path, float left, float top, float right, float bottom, float startAngleDeg, float sweepAngleDeg);
-void Path_arcToOval(void* path,
-                    float left,
-                    float top,
-                    float right,
-                    float bottom,
-                    float startAngleDeg,
-                    float sweepAngleDeg,
-                    int forceMoveTo);
+void Path_arcToOval(
+  void* path,
+  float left,
+  float top,
+  float right,
+  float bottom,
+  float startAngleDeg,
+  float sweepAngleDeg,
+  int forceMoveTo);
 void Path_close(void* path);
 void Path_reset(void* path);
+void Path_getBounds(void* path, float* outLTRB4);
 
 // Path (snapshot)
 void* Path_snapshot(void* path);
 void DeleteSkPath(void* skPath);
 void Path_transform(void* skPath, const float* m9);
+void SkPath_getBounds(void* skPath, float* outLTRB4);
 
 // Surface
 void* MakeCanvasSurface(int width, int height);
@@ -156,11 +160,17 @@ void Canvas_drawImageRectWithPaint(
   int mipmapMode,
   void* paint);
 void Canvas_drawTextBlob(void* canvas, void* blob, float x, float y, void* paint);
+int Canvas_getSaveCount(void* canvas);
 int Canvas_save(void* canvas);
+int Canvas_saveLayer(void* canvas, float left, float top, float right, float bottom, int hasBounds, void* paint);
 void Canvas_restore(void* canvas);
+void Canvas_restoreToCount(void* canvas, int saveCount);
 void Canvas_translate(void* canvas, float dx, float dy);
 void Canvas_scale(void* canvas, float sx, float sy);
 void Canvas_rotate(void* canvas, float degrees);
+void Canvas_drawOval(void* canvas, float left, float top, float right, float bottom, void* paint);
+void Canvas_drawArc(void* canvas, float left, float top, float right, float bottom, float startAngle, float sweepAngle, int useCenter, void* paint);
+void Canvas_drawPaint(void* canvas, void* paint);
 void Canvas_concat(void* canvas, const float* m9);
 void Canvas_setMatrix(void* canvas, const float* m9);
 void Canvas_clipRect(

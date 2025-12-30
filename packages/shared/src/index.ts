@@ -1,5 +1,5 @@
 export { Eq } from './eq'
-export { Debug } from './debug'
+export { DebugDescription } from './debug'
 
 export * from './argument-error'
 export * from './clamp'

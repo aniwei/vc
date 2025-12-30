@@ -4,17 +4,11 @@ import path from 'node:path'
 import { CanvasKitApi } from './CanvasKitApi'
 
 function readU8Copy(ptr: number, len: number): Uint8Array {
-  const heap = CanvasKitApi.heapU8()
-  return heap.slice(ptr >>> 0, (ptr + len) >>> 0)
+  return CanvasKitApi.getBytes(ptr >>> 0, len).slice()
 }
 
 function writeF32Array(ptr: number, values: ArrayLike<number>): void {
-  const heap = CanvasKitApi.heapU8()
-  const f32 = new Float32Array(heap.buffer)
-  const off = (ptr >>> 0) >>> 2
-  for (let i = 0; i < values.length; i++) {
-    f32[off + i] = +values[i]!
-  }
+  CanvasKitApi.setFloat32Array(ptr >>> 0, values)
 }
 
 function encodeDataToBytes(dataPtr: number): Uint8Array {

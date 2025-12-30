@@ -2,7 +2,6 @@ import invariant from 'invariant'
 
 import { ManagedObj, ManagedObjRegistry, Ptr } from './ManagedObj'
 import { CanvasKitApi } from './CanvasKitApi'
-import { writeFloat32Array, writeUint32Array } from './wasm/memory'
 
 class ShaderPtr extends Ptr {
   constructor(ptr?: number) {
@@ -53,22 +52,27 @@ export class Shader extends ManagedObj {
 
     const count = colors.length | 0
     const colorsPtr = CanvasKitApi.malloc(count * 4) as number
+    
     const posPtr = CanvasKitApi.malloc(count * 4) as number
 
     try {
-      writeUint32Array(colorsPtr, colors)
-
+      CanvasKitApi.setUint32Array(colorsPtr, colors)
       const stops = positions && positions.length === count ? positions : null
+      
       if (stops) {
-        writeFloat32Array(posPtr, stops)
+        CanvasKitApi.setFloat32Array(posPtr, stops)
       } else {
         // Evenly spaced defaults.
-        const tmp = new Float32Array(count)
-        if (count === 1) tmp[0] = 0
-        else {
-          for (let i = 0; i < count; i++) tmp[i] = i / (count - 1)
+        const data = new Float32Array(count)
+        if (count === 1) {
+          data[0] = 0
+        } else {
+          for (let i = 0; i < count; i++) {
+            data[i] = i / (count - 1)
+          }
         }
-        writeFloat32Array(posPtr, tmp)
+
+        CanvasKitApi.setFloat32Array(posPtr, data)
       }
 
       const shaderPtr = CanvasKitApi.Shader.makeLinearGradient(

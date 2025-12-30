@@ -6,8 +6,7 @@ import { Canvas, CanvasPtr } from './Canvas'
 import { Image, ImagePtr } from './Image'
 
 function readU8Copy(ptr: number, len: number): Uint8Array {
-  const heap = CanvasKitApi.heapU8()
-  return heap.slice(ptr >>> 0, (ptr + len) >>> 0)
+  return CanvasKitApi.getBytes(ptr >>> 0, len).slice()
 }
 
 function encodeDataToBytes(dataPtr: number): Uint8Array {

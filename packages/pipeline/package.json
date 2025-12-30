@@ -1,0 +1,34 @@
+{
+  "name": "pipeline",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "gen:canvaskitapi": "tsx scripts/getEnums.ts",
+    "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && pnpm run gen:canvaskitapi && tsc -p tsconfig.json",
+    "smoke": "pnpm run build && node dist/smoke.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.22.0",
+  "dependencies": {
+    "geometry": "workspace:*",
+    "bindings": "workspace:*",
+    "shared": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0",
+    "@types/invariant": "^2.2.37",
+    "@types/node": "^20.19.27",
+    "invariant": "^2.2.4",
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,4 +1,6 @@
-export class Size {
+import { Eq, DebugDescription } from 'shared'
+
+export class Size implements Eq<Size>, DebugDescription {
   static lerp(a: Size | null = null, b: Size | null = null, t: number): Size | null {
     if (t === null || Number.isNaN(t)) {
       throw new Error('The argument "t" cannot be null or NaN.')
@@ -6,11 +8,11 @@ export class Size {
 
     if (b === null) {
       if (a === null) return null
-      return a.multiply(1.0 - t)
+      return a.mul(1.0 - t)
     }
 
     if (a === null) {
-      return b.multiply(t)
+      return b.mul(t)
     }
 
     return new Size(
@@ -28,24 +30,12 @@ export class Size {
     return this.width <= 0 || this.height <= 0
   }
 
-  eq(other: Size | null): boolean {
-    return !!other && other.width === this.width && other.height === this.height
-  }
-
   mul(scale: number): Size {
     return new Size(this.width * scale, this.height * scale)
   }
 
-  multiply(operand: number): Size {
-    return this.mul(operand)
-  }
-
   div(scale: number): Size {
     return new Size(this.width / scale, this.height / scale)
-  }
-
-  divide(operand: number): Size {
-    return this.div(operand)
   }
 
   add(other: Size): Size {
@@ -56,7 +46,15 @@ export class Size {
     return new Size(this.width - other.width, this.height - other.height)
   }
 
-  subtract(other: Size): Size {
-    return this.sub(other)
+  eq(other: Size | null): boolean {
+    return !!other && other.width === this.width && other.height === this.height
+  }
+
+  notEq(other: Size | null): boolean {
+    return !this.eq(other)
+  }
+
+  debugDescription(): string {
+    return `Size(${this.width}, ${this.height})`
   }
 }

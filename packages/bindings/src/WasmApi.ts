@@ -35,60 +35,91 @@ export class WasmApi {
     return this.#memoryRef
   }
 
-  heapU8(): Uint8Array {
+  #heapU8(): Uint8Array {
     return this.getHeapU8()
   }
 
-  heapU32(): Uint32Array {
-    return new Uint32Array(this.heapU8().buffer)
+  #heapU32(): Uint32Array {
+    return new Uint32Array(this.#heapU8().buffer)
   }
 
-  heapF32(): Float32Array {
-    return new Float32Array(this.heapU8().buffer)
+  #heapF32(): Float32Array {
+    return new Float32Array(this.#heapU8().buffer)
   }
 
-  readBytes(ptr: Ptr, len: number): Buffer {
-    return Buffer.from(this.heapU8().subarray(ptr >>> 0, (ptr + len) >>> 0))
+  // MDN DataView-style APIs
+  getUint8(byteOffset: Ptr): number {
+    return this.#heapU8()[byteOffset >>> 0] >>> 0
   }
 
-  writeBytes(ptr: Ptr, buf: Uint8Array): void {
-    this.heapU8().set(buf, ptr >>> 0)
+  setUint8(byteOffset: Ptr, value: number): void {
+    this.#heapU8()[byteOffset >>> 0] = value & 0xff
   }
 
-  writeU32Array(ptr: Ptr, arr: Uint32Array): void {
-    if (!arr.length) return
-    this.heapU32().set(arr, (ptr >>> 0) >>> 2)
+  getUint32(byteOffset: Ptr, littleEndian: boolean = true): number {
+    const dv = new DataView(this.#heapU8().buffer)
+    return dv.getUint32(byteOffset >>> 0, littleEndian) >>> 0
   }
 
-  writeF32Array(ptr: Ptr, arr: Float32Array): void {
-    if (!arr.length) return
-    this.heapF32().set(arr, (ptr >>> 0) >>> 2)
+  setUint32(byteOffset: Ptr, value: number, littleEndian: boolean = true): void {
+    const dv = new DataView(this.#heapU8().buffer)
+    dv.setUint32(byteOffset >>> 0, value >>> 0, littleEndian)
   }
 
-  // Prefer these names in new code.
-  writeUint32Array(ptr: Ptr, values: ArrayLike<number> | Uint32Array): void {
+  getFloat32(byteOffset: Ptr, littleEndian: boolean = true): number {
+    const dv = new DataView(this.#heapU8().buffer)
+    return dv.getFloat32(byteOffset >>> 0, littleEndian)
+  }
+
+  setFloat32(byteOffset: Ptr, value: number, littleEndian: boolean = true): void {
+    const dv = new DataView(this.#heapU8().buffer)
+    dv.setFloat32(byteOffset >>> 0, +value, littleEndian)
+  }
+
+  getBytes(byteOffset: Ptr, length: number): Uint8Array {
+    return this.#heapU8().subarray(byteOffset >>> 0, ((byteOffset >>> 0) + (length >>> 0)) >>> 0)
+  }
+
+  setBytes(byteOffset: Ptr, bytes: ArrayLike<number> | Uint8Array): void {
+    const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes as ArrayLike<number>)
+    this.#heapU8().set(u8, byteOffset >>> 0)
+  }
+
+  getUint32Array(byteOffset: Ptr, length: number): Uint32Array {
+    return new Uint32Array(this.#heapU8().buffer, byteOffset >>> 0, length >>> 0)
+  }
+
+  setUint32Array(byteOffset: Ptr, values: ArrayLike<number> | Uint32Array): void {
     if (values instanceof Uint32Array) {
-      this.writeU32Array(ptr, values)
+      if (!values.length) return
+      this.#heapU32().set(values, (byteOffset >>> 0) >>> 2)
       return
     }
+
     const len = values.length >>> 0
     if (!len) return
-    const u32 = this.heapU32()
-    const off = (ptr >>> 0) >>> 2
+    const u32 = this.#heapU32()
+    const off = (byteOffset >>> 0) >>> 2
     for (let i = 0; i < len; i++) {
       u32[off + i] = (values[i]! >>> 0) as number
     }
   }
 
-  writeFloat32Array(ptr: Ptr, values: ArrayLike<number> | Float32Array): void {
+  getFloat32Array(byteOffset: Ptr, length: number): Float32Array {
+    return new Float32Array(this.#heapU8().buffer, byteOffset >>> 0, length >>> 0)
+  }
+
+  setFloat32Array(byteOffset: Ptr, values: ArrayLike<number> | Float32Array): void {
     if (values instanceof Float32Array) {
-      this.writeF32Array(ptr, values)
+      if (!values.length) return
+      this.#heapF32().set(values, (byteOffset >>> 0) >>> 2)
       return
     }
+
     const len = values.length >>> 0
     if (!len) return
-    const f32 = this.heapF32()
-    const off = (ptr >>> 0) >>> 2
+    const f32 = this.#heapF32()
+    const off = (byteOffset >>> 0) >>> 2
     for (let i = 0; i < len; i++) {
       f32[off + i] = +values[i]!
     }
@@ -103,7 +134,7 @@ export class WasmApi {
     }
 
     if (bytes instanceof Uint8Array) {
-      this.writeBytes(ptr, bytes)
+      this.setBytes(ptr, bytes)
     }
 
     return ptr
@@ -161,6 +192,7 @@ export class WasmApi {
   }
 
   attach(runner: any): void {
+    const mem = this
     const imports: Record<string, any> = (runner as any).imports ?? ((runner as any).imports = {})
     const baseEnv: Record<string, any> = imports.env ?? {}
   
@@ -263,8 +295,8 @@ export class WasmApi {
     if (typeof wasi.environ_sizes_get !== 'function') {
       wasi.environ_sizes_get = function environ_sizes_get(environCountPtr: number, environBufSizePtr: number) {
         // int* environCount, int* environBufSize
-        this.heapU32()[(environCountPtr >>> 0) >>> 2] = 0
-        this.heapU32()[(environBufSizePtr >>> 0) >>> 2] = 0
+        mem.setUint32(environCountPtr >>> 0, 0, true)
+        mem.setUint32(environBufSizePtr >>> 0, 0, true)
         return 0
       }
     }
@@ -279,16 +311,17 @@ export class WasmApi {
       wasi.fd_write = function fd_write(fd: number, iovs: number, iovsLen: number, nwrittenPtr: number) {
         let written = 0
         for (let i = 0; i < (iovsLen | 0); i++) {
-          const ptr = this.heapU32()[((iovs + i * 8) >>> 0) >>> 2] >>> 0
-          const len = this.heapU32()[((iovs + i * 8 + 4) >>> 0) >>> 2] >>> 0
+          const base = (iovs + i * 8) >>> 0
+          const ptr = mem.getUint32((base + 0) >>> 0, true) >>> 0
+          const len = mem.getUint32((base + 4) >>> 0, true) >>> 0
           if (len) {
-            const chunk = this.readBytes(ptr, len)
+            const chunk = Buffer.from(mem.getBytes(ptr, len))
             written += len
             if ((fd | 0) === 1) process.stdout.write(chunk)
             else if ((fd | 0) === 2) process.stderr.write(chunk)
           }
         }
-        this.heapU32()[(nwrittenPtr >>> 0) >>> 2] = written >>> 0
+        mem.setUint32(nwrittenPtr >>> 0, written >>> 0, true)
         return 0
       }
     }
@@ -301,22 +334,22 @@ export class WasmApi {
   
     if (typeof wasi.fd_read !== 'function') {
       wasi.fd_read = function fd_read(_fd: number, _iovs: number, _iovsLen: number, nwrittenPtr: number) {
-        this.heapU32()[(nwrittenPtr >>> 0) >>> 2] = 0
+        mem.setUint32(nwrittenPtr >>> 0, 0, true)
         return 8 // EBADF
       }
     }
   
     if (typeof wasi.fd_seek !== 'function') {
       wasi.fd_seek = function fd_seek(_fd: number, _offsetLo: number, _offsetHi: number, _whence: number, newOffsetPtr: number) {
-        this.heapU32()[(newOffsetPtr >>> 0) >>> 2] = 0
-        this.heapU32()[(((newOffsetPtr >>> 0) + 4) >>> 0) >>> 2] = 0
+        mem.setUint32((newOffsetPtr >>> 0) + 0, 0, true)
+        mem.setUint32((newOffsetPtr >>> 0) + 4, 0, true)
         return 8 // EBADF
       }
     }
   
     if (typeof wasi.fd_pread !== 'function') {
       wasi.fd_pread = function fd_pread(_fd: number, _iovs: number, _iovsLen: number, _offsetLo: number, _offsetHi: number, nwrittenPtr: number) {
-        this.heapU32()[(nwrittenPtr >>> 0) >>> 2] = 0
+        mem.setUint32(nwrittenPtr >>> 0, 0, true)
         return 8 // EBADF
       }
     }
