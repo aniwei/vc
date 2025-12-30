@@ -127,6 +127,19 @@ export class Rect implements Eq<Rect>, DebugDescription {
     return [this.left, this.top, this.right, this.bottom]
   }
 
+  intersect(rect: Rect): Rect {
+    const left = Math.max(this.left, rect.left)
+    const top = Math.max(this.top, rect.top)
+    const right = Math.min(this.right, rect.right)
+    const bottom = Math.min(this.bottom, rect.bottom)
+
+    if (right <= left || bottom <= top) {
+      return Rect.zero()
+    }
+
+    return Rect.fromLTRB(left, top, right, bottom)
+  }
+
   eq(other: Rect | null): boolean {
     return (
       !!other &&

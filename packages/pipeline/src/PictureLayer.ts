@@ -1,18 +1,21 @@
-//// => 
-// 位图层
+import invariant from 'invariant'
+import { Mat4, Offset } from 'geometry'
+import { Layer } from './Layer'
+import { PrerollContext } from './PrerollContext'
+import { PaintContext } from './PaintContext'
+
 export class PictureLayer extends Layer {
-  // => picture
-  protected _picture: Picture | null = null
+  #picture: Picture | null
   public get picture () {
-    return this._picture
+    return this.#picture
   }
   public set picture (picture: Picture | null) {
     if (
-      this._picture === null || 
-      this._picture !== picture
+      this.#picture === null || 
+      this.#picture !== picture
     ) {
-      this._picture?.dispose()
-      this._picture = picture
+      this.#picture?.dispose()
+      this.#picture = picture
     }
   }
 
@@ -22,14 +25,9 @@ export class PictureLayer extends Layer {
   
   public offset: Offset = Offset.zero()
 
-  /**
-   * 计算边界
-   * @param {PrerollContext} context 
-   * @param {Matrix4} matrix 
-   */
   preroll (
     context: PrerollContext, 
-    matrix: Matrix4
+    matrix: Mat4
   ) {
     invariant(this.picture !== null, 'The "PictureLayer.picture" cannot be null.')
     invariant(this.picture.cullRect, 'The "PictureLayer.picture.cullRect" cannot be null.')
@@ -37,13 +35,9 @@ export class PictureLayer extends Layer {
     this.bounds = this.picture.cullRect.shift(this.offset)
   }
 
-  /**
-   * 绘制
-   * @param {PaintContext} context 
-   */
+
   paint (context: PaintContext) {
     invariant(this.picture !== null, `The "PictureLayer.picture" cannot be null.`) 
-    invariant(!this.ignored)
 
     context.leaf.save()
     context.leaf.translate(this.offset.dx, this.offset.dy)

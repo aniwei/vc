@@ -26,6 +26,12 @@ export type CanvasKit = WasmApi & {
   ParagraphBuilder: ParagraphBuilderApi
   Shader: ShaderApi
   PathEffect: PathEffectApi
+
+  // WebGL-compat (best-effort for cheap/no-glue builds)
+  getWebGLContext?: (canvas: any, attrs?: Record<string, any>) => number
+  makeWebGLContext?: (ctx: number) => any | null
+  makeOnScreenGLSurface?: (grCtx: any, w: number, h: number, colorSpace?: any, sc?: number, st?: number) => Ptr | null
+  makeWebGLCanvasSurface?: (idOrElement: any, colorSpace?: any, attrs?: Record<string, any>) => Ptr | null
 }
 
 async function makeWasmApi(input: string): Promise<CanvasKit> {
@@ -205,5 +211,25 @@ export class CanvasKitApi {
   static allocBytes(bytes: ArrayLike<number> | Uint8Array): Ptr {
     invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
     return this.#api.allocBytes(bytes)
+  }
+
+  static getWebGLContext(canvas: any, attrs?: Record<string, any>): number {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return (this.#api as any).getWebGLContext(canvas, attrs)
+  }
+
+  static makeWebGLContext(ctx: number): any | null {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return (this.#api as any).makeWebGLContext(ctx)
+  }
+
+  static makeOnScreenGLSurface(grCtx: any, w: number, h: number, colorSpace?: any, sc?: number, st?: number): Ptr | null {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return (this.#api as any).makeOnScreenGLSurface(grCtx, w, h, colorSpace, sc, st)
+  }
+
+  static makeWebGLCanvasSurface(idOrElement: any, colorSpace?: any, attrs?: Record<string, any>): Ptr | null {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return (this.#api as any).makeWebGLCanvasSurface(idOrElement, colorSpace, attrs)
   }
 }

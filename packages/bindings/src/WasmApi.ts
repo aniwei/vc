@@ -1,5 +1,6 @@
 import invariant from 'invariant'
 import type { Ptr } from './types'
+import { EmscriptenGL, type WebGLContextLike } from './webgl/EmscriptenGL'
 
 function isNodeLike(): boolean {
   return typeof process !== 'undefined' && !!(process as any).versions?.node
@@ -12,6 +13,13 @@ function isProbablyUrl(input: string): boolean {
 export class WasmApi {
   #exports: Map<string, any> = new Map()
   #runner: any
+
+  #envImpl: Record<string, any> | null = null
+  #gotFuncGlobals: Map<string, WebAssembly.Global> = new Map()
+  #glShim: EmscriptenGL | null = null
+
+  #webglContexts: Map<number, WebGLContextLike> = new Map()
+  #nextWebglHandle = 1
 
   #getHeapU8: (() => Uint8Array) | null = null
   #memoryRef: any = null
@@ -195,6 +203,7 @@ export class WasmApi {
     const mem = this
     const imports: Record<string, any> = (runner as any).imports ?? ((runner as any).imports = {})
     const baseEnv: Record<string, any> = imports.env ?? {}
+    this.#envImpl = baseEnv
   
     // 一些编解码器/库依赖 Emscripten 提供的这些辅助函数。
     // 在我们的无 glue 设置下提供尽力实现。
@@ -275,7 +284,15 @@ export class WasmApi {
         if (prop === Symbol.toStringTag) {
           return undefined
         }
-        return new WebAssembly.Global({ value: 'i32', mutable: true }, 0)
+
+        if (typeof prop !== 'string') {
+          return new WebAssembly.Global({ value: 'i32', mutable: true }, 0)
+        }
+
+        const g = new WebAssembly.Global({ value: 'i32', mutable: true }, 0)
+        ;(target as any)[prop] = g
+        mem.#gotFuncGlobals.set(prop, g)
+        return g
       },
     })
   
@@ -309,16 +326,25 @@ export class WasmApi {
   
     if (typeof wasi.fd_write !== 'function') {
       wasi.fd_write = function fd_write(fd: number, iovs: number, iovsLen: number, nwrittenPtr: number) {
+        const isNode = isNodeLike()
+        const decoder = new TextDecoder('utf-8')
         let written = 0
         for (let i = 0; i < (iovsLen | 0); i++) {
           const base = (iovs + i * 8) >>> 0
           const ptr = mem.getUint32((base + 0) >>> 0, true) >>> 0
           const len = mem.getUint32((base + 4) >>> 0, true) >>> 0
           if (len) {
-            const chunk = Buffer.from(mem.getBytes(ptr, len))
+            const bytes = mem.getBytes(ptr, len)
             written += len
-            if ((fd | 0) === 1) process.stdout.write(chunk)
-            else if ((fd | 0) === 2) process.stderr.write(chunk)
+            if (isNode) {
+              const chunk = Buffer.from(bytes)
+              if ((fd | 0) === 1) process.stdout.write(chunk)
+              else if ((fd | 0) === 2) process.stderr.write(chunk)
+            } else {
+              const text = decoder.decode(bytes)
+              if ((fd | 0) === 1) console.log(text)
+              else if ((fd | 0) === 2) console.error(text)
+            }
           }
         }
         mem.setUint32(nwrittenPtr >>> 0, written >>> 0, true)
@@ -400,5 +426,106 @@ export class WasmApi {
     this.#memoryRef = cheap.Memory
     this.#runner = runner
     await this.runner.run(opts, stackSize)
+  }
+
+  // ----------------------------
+  // WebGL compatibility layer
+  // ----------------------------
+  enableWebGL(glOrCanvas: any, attrs?: Record<string, any>): WebGLContextLike {
+    let gl: any = glOrCanvas
+    if (glOrCanvas && typeof glOrCanvas.getContext === 'function') {
+      gl = glOrCanvas.getContext('webgl2', attrs) ?? glOrCanvas.getContext('webgl', attrs)
+    }
+
+    invariant(gl != null, 'Failed to obtain a WebGL context (webgl2/webgl).')
+
+    const table: WebAssembly.Table | undefined = (this.runner.imports?.env as any)?.__indirect_function_table
+    invariant(table != null, 'Missing env.__indirect_function_table (required for WebGL function pointers)')
+
+    const shim = new EmscriptenGL({
+      gl,
+      heapU8: () => this.#heapU8(),
+      malloc: (n) => this.malloc(n),
+      setBytes: (ptr, bytes) => this.setBytes(ptr, bytes),
+    })
+    this.#glShim = shim
+
+    // This cheap wasm build imports glGetString from env.
+    if (this.#envImpl) {
+      this.#envImpl.glGetString = (name: number) => shim.glGetString(name)
+    }
+
+    // Assign each imported emscripten_gl* global to a new indirect table entry.
+    for (const [name, g] of this.#gotFuncGlobals) {
+      if (!name.startsWith('emscripten_gl')) continue
+
+      let impl: any = (shim as any)[name]
+      if (typeof impl !== 'function') impl = shim.unimplemented(name)
+
+      const fn = (...args: any[]) => impl.apply(shim, args)
+      const idx = table.length
+      table.grow(1)
+      table.set(idx, fn)
+      ;(g as any).value = idx
+    }
+
+    return gl
+  }
+
+  getWebGLContext(canvas: any, attrs?: Record<string, any>): number {
+    invariant(canvas != null, 'null canvas passed into GetWebGLContext')
+    invariant(typeof canvas.getContext === 'function', 'GetWebGLContext expects a canvas-like object with getContext')
+
+    // Default: prefer WebGL2 if possible.
+    const major = (attrs as any)?.majorVersion
+    const opts = attrs ?? {}
+
+    let gl: any = null
+    if (major === 1) gl = canvas.getContext('webgl', opts)
+    else if (major === 2) gl = canvas.getContext('webgl2', opts)
+    else gl = canvas.getContext('webgl2', opts) ?? canvas.getContext('webgl', opts)
+
+    if (!gl) return 0
+
+    const handle = this.#nextWebglHandle++
+    this.#webglContexts.set(handle, gl)
+    return handle
+  }
+
+  deleteContext(handle: number): void {
+    this.#webglContexts.delete(handle | 0)
+  }
+
+  makeWebGLContext(ctx: number): any | null {
+    const gl = this.#webglContexts.get(ctx | 0) ?? null
+    if (!gl) return null
+    this.enableWebGL(gl)
+    return { _context: ctx | 0, delete() {} }
+  }
+
+  makeOnScreenGLSurface(_grCtx: any, w: number, h: number, _colorSpace?: any, _sc?: number, _st?: number): Ptr | null {
+    // Cheap/no-glue build does not export _MakeOnScreenGLSurface.
+    // Best-effort compatibility: create a GPU render-target surface.
+    const ptr = (this.invoke('MakeCanvasSurface', w | 0, h | 0) as Ptr | null) ?? 0
+    return ptr || null
+  }
+
+  makeWebGLCanvasSurface(idOrElement: any, colorSpace?: any, attrs?: Record<string, any>): Ptr | null {
+    let canvas = idOrElement
+    if (typeof idOrElement === 'string') {
+      invariant(typeof document !== 'undefined', 'MakeWebGLCanvasSurface(string) requires document')
+      canvas = document.getElementById(idOrElement)
+      invariant(canvas != null, `Canvas with id ${idOrElement} was not found`)
+    }
+
+    const ctx = this.getWebGLContext(canvas, attrs)
+    if (!ctx || ctx < 0) return null
+
+    const gr = this.makeWebGLContext(ctx)
+    if (!gr) return null
+
+    const w = (canvas?.width ?? 0) | 0
+    const h = (canvas?.height ?? 0) | 0
+    return this.makeOnScreenGLSurface(gr, w, h, colorSpace)
   }
 }

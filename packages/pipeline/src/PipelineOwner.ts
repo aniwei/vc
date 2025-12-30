@@ -1,34 +1,30 @@
 import invariant from 'invariant'
-import { Obj } from 'bindings'
-import { PaintingContext } from './painting-context'
+import { PaintingContext } from './PaintContext'
 import { ViewConfiguration } from './view-configuration'
 
-import type { Engine, EngineRasterizer } from '@at/engine'
 
 //// => ObjectNeedingUpdate
 export interface RequestRasterizeHandle {
   (): void
 }
 
-export class ObjectNeedingUpdate {
-  static create () {
-    return new ObjectNeedingUpdate()
-  }
+export class NeedingUpdate {
+  
 
   // => length
   public get length () {
-    return this.objects.length
+    return this.objs.length
   }
 
-  public objects: Object[] = []
+  public objs: Obj[] = []
 
   sort (compare: (a: Object, b: Object) => number) {
-    return this.objects.sort(compare)
+    return this.objjs.sort(compare)
   }
 
-  add (node: Object) {
-    if (!this.objects.includes(node)) {
-      this.objects.push(node)
+  add (node: Obj) {
+    if (!this.objs.includes(node)) {
+      this.objs.push(node)
     }
   }
 }
@@ -128,10 +124,6 @@ export class PipelineOwner {
     this.objectsNeedingCompositingBitsUpdate = ObjectNeedingUpdate.create()
   }
   
-  /**
-   * 绘制
-   * @returns {boolean}
-   */
   flushPaint (): boolean {
     try {
       const dirtyNodes: Object[] = this.objectsNeedingPaint.sort((a: Object, b: Object) => {

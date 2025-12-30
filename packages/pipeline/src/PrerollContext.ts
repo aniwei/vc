@@ -1,11 +1,8 @@
 
 import { Mat4, Rect, RRect } from 'geometry'
-import { Eq } from 'shared'
+import { Eq, invariant } from 'shared'
 
 import { Path } from 'bindings'
-
-
-import { RasterCache } from './rasterizer'
 
 export enum MutatorTag {
   ClipRect,
@@ -110,55 +107,35 @@ export class Mutator extends Eq<Mutator> {
     })
   }
 
-  // => isClip
   public get isClip (): boolean {
     return (
-      this.kind === MutatorKind.ClipRect ||
-      this.kind === MutatorKind.ClipRRect ||
-      this.kind === MutatorKind.ClipPath
+      this.tag === MutatorTag.ClipRect ||
+      this.tag === MutatorTag.ClipRRect ||
+      this.tag === MutatorTag.ClipPath
     )
   }
 
-  // => alphaFloat
   public get alphaFloat (): number {
     return this.alpha! / 255.0
   }
 
-  /**
-   * 是否相等
-   * @param {Mutator | null} other 
-   * @returns {boolean}
-   */
-  equal (other: Mutator | null): boolean {
+  eq (other: Mutator | null): boolean {
     return (
       other instanceof Mutator && (
-        !!other.rect?.equal(this.rect ?? null) ||
-        !!other.rrect?.equal(this.rrect ?? null)
+        !!other.rect?.eq(this.rect ?? null) ||
+        !!other.rrect?.eq(this.rrect ?? null)
       )
     )
   }
 
-  /**
-   * 是否相等
-   * @param {Mutator | null} other 
-   * @returns {boolean}
-   */
-  notEqual (other: Mutator | null): boolean {
-    return !this.equal(other)
+  notEq (other: Mutator | null): boolean {
+    return !this.eq(other)
   }
 }
 
-export class PrerollContext extends Equalable<PrerollContext> {
-  static create (cache: RasterCache | null) {
-    return new PrerollContext(cache)
-  }
-
-   /**
-   * @param {PrerollContext} context
-   * @return {PrerollContext}
-   */  
+export class PrerollContext extends Eq<PrerollContext> {
    static copy (origin: PrerollContext) {
-    const context = PrerollContext.create(origin.cache)
+    const context = new PrerollContext(origin.cache)
     
     for (const mut of origin.mutators) {
       context.mutators.push(mut)
@@ -170,23 +147,24 @@ export class PrerollContext extends Equalable<PrerollContext> {
   // => cullRect
   // 获取绘制范围
   public get cullRect () {
-    let cullRect = Rect.LARGEST
-    for (const mutator of this.mutators) {
-      let rect: Rect = Rect.Zero
+    let cullRect = Rect.largest()
 
-      switch (mutator.kind) {
-        case MutatorKind.ClipRect:
-          invariant(mutator.rect)
+    for (const mutator of this.mutators) {
+      let rect: Rect = Rect.zero()
+
+      switch (mutator.tag) {
+        case MutatorTag.ClipRect:
+          invariant(mutator.rect, 'The "Mutator.rect" cannot be null.')
           rect = mutator.rect
           break
 
-        case MutatorKind.ClipRRect:
-          invariant(mutator.rrect)
+        case MutatorTag.ClipRRect:
+          invariant(mutator.rrect, 'The "Mutator.rrect" cannot be null.')
           rect = mutator.rrect.outer
           break
 
-        case MutatorKind.ClipPath:
-          invariant(mutator.path)
+        case MutatorTag.ClipPath:
+          invariant(mutator.path, 'The "Mutator.path" cannot be null.')
           rect = mutator.path.getBounds()
           break
       }
