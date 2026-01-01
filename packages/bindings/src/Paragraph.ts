@@ -107,8 +107,7 @@ export class Paragraph extends ManagedObj {
           textAlign,
           maxLines,
           ellipsisPtr,
-          ellipsisBytes.length,
-        )
+          ellipsisBytes.length)
         : CanvasKitApi.Paragraph.makeFromText(
           textPtr,
           textBytes.length,
@@ -118,8 +117,7 @@ export class Paragraph extends ManagedObj {
           wrapWidth,
           color,
           textAlign,
-          maxLines,
-        )) as number
+          maxLines)) as number
 
       return Paragraph.fromRaw(p)
     } finally {

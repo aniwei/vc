@@ -13,5 +13,12 @@
     "declaration": true
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"],
-  "exclude": ["src/canvaskitapi.d.ts", "src/canvaskit.ts"]
+  "exclude": [
+    "src/canvaskitapi.d.ts",
+    "src/canvaskit.ts",
+    "src/ColorFilter.ts",
+    "src/ImageFilter.ts",
+    "src/MatrixImageFilter.ts",
+    "src/BlurImageFilter.ts"
+  ]
 }

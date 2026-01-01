@@ -10,10 +10,6 @@ export class SurfaceApi extends Api {
     return this.invoke('MakeSWCanvasSurface', w | 0, h | 0)
   }
 
-  delete(surface: Ptr): void {
-    this.invoke('DeleteSurface', surface)
-  }
-
   getCanvas(surface: Ptr): Ptr {
     return this.invoke('Surface_getCanvas', surface)
   }
@@ -40,5 +36,9 @@ export class SurfaceApi extends Api {
 
   readPixelsRgba8888(surface: Ptr, x: number, y: number, w: number, h: number, dst: Ptr, dstRowBytes: number): number {
     return this.invoke('Surface_readPixelsRGBA8888', surface, x | 0, y | 0, w | 0, h | 0, dst >>> 0, dstRowBytes | 0)
+  }
+
+    delete(surface: Ptr): void {
+    this.invoke('DeleteSurface', surface)
   }
 }

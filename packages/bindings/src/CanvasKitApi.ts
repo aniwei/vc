@@ -8,6 +8,8 @@ import { ParagraphApi } from './api/ParagraphApi'
 import { ParagraphBuilderApi } from './api/ParagraphBuilderApi'
 import { ShaderApi } from './api/ShaderApi'
 import { PathEffectApi } from './api/PathEffectApi'
+import { ColorFilterApi } from './api/ColorFilterApi'
+import { MaskFilterApi } from './api/MaskFilterApi'
 
 import type { Imports, Ptr } from './types'
 
@@ -19,6 +21,8 @@ export type { Imports, Ptr }
 export type CanvasKit = WasmApi & {
   Path: PathApi
   Paint: PaintApi
+  ColorFilter: ColorFilterApi
+  MaskFilter: MaskFilterApi
   Surface: SurfaceApi
   Canvas: CanvasApi
   Image: ImageApi
@@ -27,7 +31,6 @@ export type CanvasKit = WasmApi & {
   Shader: ShaderApi
   PathEffect: PathEffectApi
 
-  // WebGL-compat (best-effort for cheap/no-glue builds)
   getWebGLContext?: (canvas: any, attrs?: Record<string, any>) => number
   makeWebGLContext?: (ctx: number) => any | null
   makeOnScreenGLSurface?: (grCtx: any, w: number, h: number, colorSpace?: any, sc?: number, st?: number) => Ptr | null
@@ -42,6 +45,8 @@ async function makeWasmApi(input: string): Promise<CanvasKit> {
 
   api.Path = new PathApi(wasmApi)
   api.Paint = new PaintApi(wasmApi)
+  api.ColorFilter = new ColorFilterApi(wasmApi)
+  api.MaskFilter = new MaskFilterApi(wasmApi)
   api.Surface = new SurfaceApi(wasmApi)
   api.Canvas = new CanvasApi(wasmApi)
   api.Image = new ImageApi(wasmApi)
@@ -90,6 +95,16 @@ export class CanvasKitApi {
   static get Paint (): PaintApi {
     invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
     return this.#api.Paint
+  }
+
+  static get ColorFilter (): ColorFilterApi {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return this.#api.ColorFilter
+  }
+
+  static get MaskFilter (): MaskFilterApi {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return this.#api.MaskFilter
   }
 
   static get Surface (): SurfaceApi {
@@ -147,7 +162,6 @@ export class CanvasKitApi {
     return this.#api.alloc(bytes)
   }
 
-  // MDN DataView-style helpers (preferred)
   static getUint8(byteOffset: Ptr): number {
     invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
     return this.#api.getUint8(byteOffset)

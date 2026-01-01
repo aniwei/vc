@@ -40,7 +40,7 @@ export class ManagedObjRegistry {
   static #registry: FinalizationRegistry<Ptr> | null = null
   static #ptrs: Ptr[] = []
 
-  static add (obj: ManagedObj, ptr: Ptr) {
+  static add (obj: object, ptr: Ptr) {
     this.#registry = this.#registry ?? new FinalizationRegistry((ptr) => {
       this.cleanUp(ptr)
     })
@@ -48,8 +48,8 @@ export class ManagedObjRegistry {
     this.#registry.register(obj, ptr)
   }
 
-  static remove (ptr: ManagedObj) {
-    this.#registry?.unregister(ptr)
+  static remove (obj: object) {
+    this.#registry?.unregister(obj)
   }
 
   static cleanUp (ptr: Ptr) {
@@ -94,7 +94,7 @@ export abstract class ManagedObj extends Eq<ManagedObj> {
       ManagedObjRegistry.add(this, ptr)
     }
 
-    this.delete()
+    this.#delete()
     this.#ptr = ptr
   }
 
@@ -106,9 +106,7 @@ export abstract class ManagedObj extends Eq<ManagedObj> {
     this.#ptr = ptr ?? this.resurrect() ?? null
   }
 
-  resurrect (): Ptr {
-    throw new Error('The "resurrect" method is not implemented.')
-  }
+  abstract resurrect (): Ptr
 
   eq (obj: ManagedObj | null) {
     return obj?.ptr === this.ptr
@@ -118,18 +116,95 @@ export abstract class ManagedObj extends Eq<ManagedObj> {
     return !this.eq(obj)
   }
 
-  isDeleted (): boolean {
+  #isDeleted (): boolean {
     invariant(this.ptr !== null, `The "ptr" cannot be null.`)
     return this.ptr.isDeleted()
   }
   
+  #delete () {
+    this.#ptr?.delete()
+    this.#ptr = null
+  }
+
+  isDisposed (): boolean {
+    return this.#disposed
+  }
+
+  dispose () {
+    this.#delete()
+    this.#disposed = true
+  }
+}
+
+//// => SkiaRefBox
+// 引用计数箱子
+export class ShareManagedObj<R, T extends Ptr = Ptr> {
+  #ptr: T | null = null 
+  public get ptr (): T {
+    return this.#ptr as T
+  }
+  public set ptr (ptr: T | null) {
+    this.#ptr = ptr
+  }
+
+  // 引用计数
+  #count: number = 0
+  #referrers: Set<R> = new Set()
+  #isDeletedPermanently = false
+  
+  // disposed
+  protected disposed: boolean = false
+
+  constructor (ptr: T) {
+    this.ptr = ptr
+    ManagedObjRegistry.add(this, ptr)
+  }
+  
+  retain (referrer: R) {
+    invariant(!this.#referrers.has(referrer), `Attempted to increment ref count by the same referrer more than once.`)    
+    
+    this.#referrers.add(referrer)
+    this.#count += 1
+    invariant(this.#count === this.#referrers.size, 'Ref count mismatch')
+
+    return this
+  }
+
+  /**
+   * 解引用
+   * @param {R} referrer 
+   */
+  release (referrer: R) {
+    invariant(!this.#isDeletedPermanently, `Attempted to unref an already deleted Skia object.`)
+    invariant(this.#referrers.delete(referrer), `Attempted to decrement ref count by the same referrer more than once.`)
+
+    this.#count -= 1
+    invariant(this.#count === this.#referrers.size, 'Ref count mismatch')
+
+    if (this.#count === 0) {
+      this.delete()
+      this.#isDeletedPermanently = true
+    }
+  }
+
+  /**
+   * 释放引用对象
+   */
   delete () {
+    if (this.#count > 0) {
+      console.warn('Warning: Deleting a ShareManagedObj that still has referrers.')
+    }
+
     this.#ptr?.delete()
     this.#ptr = null
   }
 
   dispose () {
+    if (this.#count > 0) {
+      console.warn('Warning: Disposing a ShareManagedObj that still has referrers.')
+    }
+
     this.delete()
-    this.#disposed = true
+    this.disposed = true
   }
 }

@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "gen:canvaskitapi": "tsx scripts/getEnums.ts",
+    "gen:enums": "tsx scripts/getEnums.ts",
+    "gen:canvaskitapi": "pnpm run gen:enums",
     "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && pnpm run gen:canvaskitapi && tsc -p tsconfig.json",
     "smoke": "pnpm run build && node dist/smoke.js"
   },
@@ -21,7 +22,8 @@
   "packageManager": "pnpm@10.22.0",
   "dependencies": {
     "@libmedia/cheap": "^1.2.0",
-    "geometry": "workspace:*"
+    "geometry": "workspace:*",
+    "shared": "workspace:*"
   },
   "devDependencies": {
     "tsx": "^4.21.0",

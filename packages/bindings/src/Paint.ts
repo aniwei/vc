@@ -2,10 +2,11 @@ import invariant from 'invariant'
 
 import { ManagedObj, ManagedObjRegistry, Ptr } from './ManagedObj'
 import { CanvasKitApi } from './CanvasKitApi'
-import type { PaintStyle } from './enums'
-import type { StrokeCap, StrokeJoin } from './api/PaintApi'
+import { BlendMode, PaintStyle } from './enums'
+import type { StrokeCap, StrokeJoin } from './enums'
+import { SharePaint } from './SharePaint'
 
-class PaintPtr extends Ptr {
+export class PaintPtr extends Ptr {
   constructor(ptr?: number) {
     super(ptr ?? CanvasKitApi.Paint.make())
   }
@@ -53,6 +54,11 @@ class PaintPtr extends Ptr {
     CanvasKitApi.Paint.setStrokeWidth(this.raw, +width)
   }
 
+  setStrokeMiter(miterLimit: number): void {
+    invariant(!this.isDeleted(), 'PaintPtr is deleted')
+    CanvasKitApi.Paint.setStrokeMiter(this.raw, miterLimit)
+  }
+
   setStrokeCap(cap: StrokeCap): void {
     invariant(!this.isDeleted(), 'PaintPtr is deleted')
     CanvasKitApi.Paint.setStrokeCap(this.raw, cap)
@@ -83,82 +89,32 @@ class PaintPtr extends Ptr {
     CanvasKitApi.Paint.setColorFilter(this.raw, colorFilter)
   }
 
+  setImageFilter(imageFilter: number): void {
+    invariant(!this.isDeleted(), 'PaintPtr is deleted')
+    CanvasKitApi.Paint.setImageFilter(this.raw, imageFilter)
+  }
+
+  setMaskFilter(maskFilter: number): void {
+    invariant(!this.isDeleted(), 'PaintPtr is deleted')
+    CanvasKitApi.Paint.setMaskFilter(this.raw, maskFilter)
+  }
+
   setPathEffect(pathEffect: number): void {
     invariant(!this.isDeleted(), 'PaintPtr is deleted')
     CanvasKitApi.Paint.setPathEffect(this.raw, pathEffect)
   }
 }
 
-export class Paint extends ManagedObj {
-  constructor() {
-    super(new PaintPtr())
+export class Paint extends SharePaint { 
+  #blendMode: BlendMode | null = null;
+  get blendMode(): BlendMode | null {
+    return this.#blendMode;
+  }
+  set blendMode(value: BlendMode | null) {
+    if (this.#blendMode !== value) {
+      this.#blendMode = value;
+      this.setBlendMode(value ?? BlendMode.SrcOver);
+    }
   }
 
-  get ptr(): PaintPtr {
-    return super.ptr as PaintPtr
-  }
-
-  resurrect(): Ptr {
-    return new PaintPtr()
-  }
-
-  setColor(argb: number): this {
-    this.ptr.setColor(argb)
-    return this
-  }
-
-  setAntiAlias(aa: boolean): this {
-    this.ptr.setAntiAlias(aa)
-    return this
-  }
-
-  setStyle(style: PaintStyle): this {
-    this.ptr.setStyle(style)
-    return this
-  }
-
-  setStrokeWidth(width: number): this {
-    this.ptr.setStrokeWidth(width)
-    return this
-  }
-
-  setStrokeCap(cap: StrokeCap): this {
-    this.ptr.setStrokeCap(cap)
-    return this
-  }
-
-  setStrokeJoin(join: StrokeJoin): this {
-    this.ptr.setStrokeJoin(join)
-    return this
-  }
-
-  setAlphaf(a: number): this {
-    this.ptr.setAlphaf(a)
-    return this
-  }
-
-  setBlendMode(mode: number): this {
-    this.ptr.setBlendMode(mode)
-    return this
-  }
-
-  setShader(shader: number): this {
-    this.ptr.setShader(shader)
-    return this
-  }
-
-  setColorFilter(colorFilter: number): this {
-    this.ptr.setColorFilter(colorFilter)
-    return this
-  }
-
-  setPathEffect(pathEffect: number): this {
-    this.ptr.setPathEffect(pathEffect)
-    return this
-  }
-
-  dispose(): void {
-    this.ptr.deleteLater()
-    super.dispose()
-  }
 }

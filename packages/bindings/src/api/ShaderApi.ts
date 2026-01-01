@@ -2,10 +2,6 @@ import { Api } from './Api'
 import type { Ptr } from '../types'
 
 export class ShaderApi extends Api {
-  delete(shader: Ptr): void {
-    this.invoke('DeleteShader', shader >>> 0)
-  }
-
   makeColor(argb: number): Ptr {
     return this.invoke('MakeColorShader', argb >>> 0) as Ptr
   }
@@ -31,5 +27,9 @@ export class ShaderApi extends Api {
       count | 0,
       tileMode | 0,
     ) as Ptr
+  }
+
+  delete(shader: Ptr): void {
+    this.invoke('DeleteShader', shader >>> 0)
   }
 }

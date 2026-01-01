@@ -1,18 +1,6 @@
 import type { Ptr } from '../types'
 import { Api } from './Api'
-import type { PaintStyle } from '../enums'
-
-export enum StrokeCap {
-  Butt = 0,
-  Round = 1,
-  Square = 2,
-}
-
-export enum StrokeJoin {
-  Miter = 0,
-  Round = 1,
-  Bevel = 2,
-}
+import type { PaintStyle, StrokeCap, StrokeJoin } from '../enums'
 
 export class PaintApi extends Api {
   make(): Ptr {
@@ -43,6 +31,10 @@ export class PaintApi extends Api {
     this.invoke('Paint_setStrokeCap', paint, cap | 0)
   }
 
+  setStrokeMiter(paint: Ptr, miterLimit: number): void {
+    this.invoke('Paint_setStrokeMiter', paint, miterLimit)
+  }
+
   setStrokeJoin(paint: Ptr, join: StrokeJoin): void {
     this.invoke('Paint_setStrokeJoin', paint, join | 0)
   }
@@ -61,6 +53,14 @@ export class PaintApi extends Api {
 
   setColorFilter(paint: Ptr, colorFilter: Ptr): void {
     this.invoke('Paint_setColorFilter', paint, colorFilter)
+  }
+
+  setImageFilter(paint: Ptr, imageFilter: Ptr): void {
+    this.invoke('Paint_setImageFilter', paint, imageFilter)
+  }
+
+  setMaskFilter(paint: Ptr, maskFilter: Ptr): void {
+    this.invoke('Paint_setMaskFilter', paint, maskFilter)
   }
 
   setPathEffect(paint: Ptr, pathEffect: Ptr): void {
