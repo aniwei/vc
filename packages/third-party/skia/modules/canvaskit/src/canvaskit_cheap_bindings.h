@@ -48,6 +48,20 @@ int SkTextAlign_Justify();
 int SkTextAlign_Start();
 int SkTextAlign_End();
 
+// WebGL (optional)
+// These are only available when the Wasm is built with CHEAP_WEBGL=1.
+int WebGL_CreateContext(const char* selectorUtf8, int byteLength, int webgl2);
+int WebGL_MakeContextCurrent(int ctx);
+int WebGL_DestroyContext(int ctx);
+
+// Creates an on-screen GPU surface backed by the default framebuffer.
+// Available when built with CHEAP_WEBGL=1.
+void* MakeOnScreenCanvasSurface(int width, int height);
+
+// WebGPU (optional)
+// Available when built with CHEAP_WEBGPU=1.
+void* MakeGPUTextureSurface(uint32_t textureHandle, uint32_t textureFormat, int width, int height);
+
 // Paint
 void* MakePaint();
 void DeletePaint(void* paint);

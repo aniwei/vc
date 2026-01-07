@@ -26,8 +26,11 @@
 #include "include/gpu/GpuTypes.h"
 #include "include/gpu/ganesh/GrDirectContext.h"
 #include "include/gpu/ganesh/SkSurfaceGanesh.h"
+#include "include/gpu/ganesh/gl/GrGLBackendSurface.h"
 #include "include/gpu/ganesh/gl/GrGLDirectContext.h"
 #include "include/gpu/ganesh/gl/GrGLInterface.h"
+#include "include/gpu/ganesh/gl/GrGLMakeWebGLInterface.h"
+#include "include/gpu/ganesh/gl/GrGLTypes.h"
 #include "include/ports/SkFontMgr_data.h"
 
 #include "modules/skparagraph/include/FontCollection.h"
@@ -47,6 +50,17 @@
 #include <memory>
 #include <optional>
 #include <vector>
+
+#ifdef CHEAP_WEBGL
+#include <emscripten/html5.h>
+#include <GLES2/gl2.h>
+#endif
+
+#ifdef CHEAP_WEBGPU
+#include <emscripten/html5_webgpu.h>
+#include <webgpu/webgpu_cpp.h>
+#include "include/gpu/ganesh/dawn/GrDawnTypes.h"
+#endif
 
 extern "C" {
 
@@ -196,12 +210,22 @@ sk_sp<SkUnicode> MakeUnicode() {
 sk_sp<const GrGLInterface> gInterface;
 sk_sp<GrDirectContext> gContext;
 
+#ifdef CHEAP_WEBGL
+EMSCRIPTEN_WEBGL_CONTEXT_HANDLE gWebGLContext = 0;
+#endif
+
 bool EnsureGLContext() {
   if (gContext && gInterface) {
     return true;
   }
 
+#ifdef CHEAP_WEBGL
+  // In a browser/emscripten environment, prefer the WebGL interface. This assumes the desired
+  // WebGL context is already current.
+  gInterface = GrGLInterfaces::MakeWebGL();
+#else
   gInterface = GrGLMakeNativeInterface();
+#endif
   if (!gInterface) {
     return false;
   }
@@ -209,6 +233,96 @@ bool EnsureGLContext() {
   gContext = GrDirectContexts::MakeGL(gInterface);
   return (bool)gContext;
 }
+
+#ifdef CHEAP_WEBGL
+SkSurface* MakeOnScreenCanvasSurfaceImpl(int width, int height) {
+  if (!EnsureGLContext()) {
+    return nullptr;
+  }
+
+  // Ensure Skia sees the default framebuffer in the expected state.
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glClearColor(0, 0, 0, 0);
+  glClearStencil(0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+  gContext->resetContext(kRenderTarget_GrGLBackendState | kMisc_GrGLBackendState);
+
+  GrGLint sampleCnt = 0;
+  glGetIntegerv(GL_SAMPLES, &sampleCnt);
+
+  GrGLint stencil = 0;
+  glGetIntegerv(GL_STENCIL_BITS, &stencil);
+
+  GrGLFramebufferInfo fbInfo;
+  fbInfo.fFBOID = 0;
+  fbInfo.fFormat = GR_GL_RGBA8;
+
+  auto target = GrBackendRenderTargets::MakeGL(width, height, sampleCnt, stencil, fbInfo);
+  sk_sp<SkSurface> surface = SkSurfaces::WrapBackendRenderTarget(
+    gContext.get(),
+    target,
+    kBottomLeft_GrSurfaceOrigin,
+    kRGBA_8888_SkColorType,
+    SkColorSpace::MakeSRGB(),
+    nullptr);
+
+  if (!surface) {
+    return nullptr;
+  }
+  SkSafeRef(surface.get());
+  return surface.get();
+}
+#endif
+
+#ifdef CHEAP_WEBGPU
+bool EnsureWebGPUContext() {
+  if (gContext) {
+    return true;
+  }
+  GrContextOptions options;
+  wgpu::Device device = wgpu::Device::Acquire(emscripten_webgpu_get_device());
+  if (!device) {
+    return false;
+  }
+  gContext = GrDirectContext::MakeDawn(device, options);
+  return (bool)gContext;
+}
+
+SkSurface* MakeGPUTextureSurfaceImpl(
+  uint32_t textureHandle,
+  uint32_t textureFormat,
+  int width,
+  int height) {
+  if (!EnsureWebGPUContext()) {
+    return nullptr;
+  }
+
+  wgpu::TextureFormat format = static_cast<wgpu::TextureFormat>(textureFormat);
+  wgpu::Texture texture(emscripten_webgpu_import_texture(textureHandle));
+  emscripten_webgpu_release_js_handle(textureHandle);
+
+  GrDawnTextureInfo info;
+  info.fTexture = texture;
+  info.fFormat = format;
+  info.fLevelCount = 1;
+
+  GrBackendTexture backendTexture(width, height, info);
+  sk_sp<SkSurface> surface = SkSurfaces::WrapBackendTexture(
+    gContext.get(),
+    backendTexture,
+    kTopLeft_GrSurfaceOrigin,
+    /*sampleCount=*/1,
+    kRGBA_8888_SkColorType,
+    SkColorSpace::MakeSRGB(),
+    nullptr);
+
+  if (!surface) {
+    return nullptr;
+  }
+  SkSafeRef(surface.get());
+  return surface.get();
+}
+#endif
 
 SkSurface* MakeRenderTargetSurface(int width, int height) {
   if (!EnsureGLContext()) {
@@ -282,6 +396,75 @@ SkMatrix MatrixFromPtr(const float* m9) {
 }  // namespace
 
 extern "C" {
+
+#ifdef CHEAP_WEBGL
+// WebGL helpers for cheap runtime.
+// selectorUtf8 is NOT guaranteed to be null-terminated; byteLength is provided.
+int WebGL_CreateContext(const char* selectorUtf8, int byteLength, int webgl2) {
+  if (!selectorUtf8 || byteLength <= 0) {
+    return 0;
+  }
+
+  std::string selector(selectorUtf8, static_cast<size_t>(byteLength));
+
+  EmscriptenWebGLContextAttributes attrs;
+  emscripten_webgl_init_context_attributes(&attrs);
+  attrs.alpha = EM_TRUE;
+  attrs.depth = EM_TRUE;
+  attrs.stencil = EM_TRUE;
+  attrs.antialias = EM_TRUE;
+  attrs.premultipliedAlpha = EM_TRUE;
+  attrs.preserveDrawingBuffer = EM_FALSE;
+  attrs.enableExtensionsByDefault = EM_TRUE;
+  attrs.majorVersion = webgl2 ? 2 : 1;
+  attrs.minorVersion = 0;
+
+  EMSCRIPTEN_WEBGL_CONTEXT_HANDLE ctx = emscripten_webgl_create_context(selector.c_str(), &attrs);
+  return static_cast<int>(ctx);
+}
+
+int WebGL_MakeContextCurrent(int ctx) {
+  EMSCRIPTEN_WEBGL_CONTEXT_HANDLE handle = static_cast<EMSCRIPTEN_WEBGL_CONTEXT_HANDLE>(ctx);
+  EMSCRIPTEN_RESULT r = emscripten_webgl_make_context_current(handle);
+  if (r != EMSCRIPTEN_RESULT_SUCCESS) {
+    return static_cast<int>(r);
+  }
+
+  // Recreate Skia GPU context when switching WebGL contexts.
+  if (gWebGLContext != handle) {
+    gWebGLContext = handle;
+    gContext.reset();
+    gInterface.reset();
+  }
+
+  // Ensure a context exists for the newly-current WebGL context.
+  (void)EnsureGLContext();
+  return 0;
+}
+
+int WebGL_DestroyContext(int ctx) {
+  EMSCRIPTEN_WEBGL_CONTEXT_HANDLE handle = static_cast<EMSCRIPTEN_WEBGL_CONTEXT_HANDLE>(ctx);
+  EMSCRIPTEN_RESULT r = emscripten_webgl_destroy_context(handle);
+  if (gWebGLContext == handle) {
+    gWebGLContext = 0;
+    gContext.reset();
+    gInterface.reset();
+  }
+  return static_cast<int>(r);
+}
+
+// Creates an on-screen GPU surface backed by the default framebuffer (FBO 0).
+void* MakeOnScreenCanvasSurface(int width, int height) {
+  return MakeOnScreenCanvasSurfaceImpl(width, height);
+}
+#endif  // CHEAP_WEBGL
+
+#ifdef CHEAP_WEBGPU
+// Wraps an imported WebGPU texture handle as a SkSurface.
+void* MakeGPUTextureSurface(uint32_t textureHandle, uint32_t textureFormat, int width, int height) {
+  return MakeGPUTextureSurfaceImpl(textureHandle, textureFormat, width, height);
+}
+#endif  // CHEAP_WEBGPU
 
 // Paint
 void* MakePaint() {

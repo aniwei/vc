@@ -8,6 +8,8 @@ import { ParagraphApi } from './api/ParagraphApi'
 import { ParagraphBuilderApi } from './api/ParagraphBuilderApi'
 import { ShaderApi } from './api/ShaderApi'
 import { PathEffectApi } from './api/PathEffectApi'
+import { WebGLApi } from './api/WebGLApi'
+import { WebGPUApi } from './api/WebGPUApi'
 
 import type { Imports, Ptr } from './types'
 
@@ -26,6 +28,8 @@ export type CanvasKit = WasmApi & {
   ParagraphBuilder: ParagraphBuilderApi
   Shader: ShaderApi
   PathEffect: PathEffectApi
+  WebGL: WebGLApi
+  WebGPU: WebGPUApi
 }
 
 async function makeWasmApi(input: string): Promise<CanvasKit> {
@@ -43,6 +47,8 @@ async function makeWasmApi(input: string): Promise<CanvasKit> {
   api.ParagraphBuilder = new ParagraphBuilderApi(wasmApi)
   api.Shader = new ShaderApi(wasmApi)
   api.PathEffect = new PathEffectApi(wasmApi)
+  api.WebGL = new WebGLApi(wasmApi)
+  api.WebGPU = new WebGPUApi(wasmApi)
 
   return api
 }
@@ -119,6 +125,16 @@ export class CanvasKitApi {
   static get PathEffect () {
     invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
     return this.#api.PathEffect
+  }
+
+  static get WebGL () {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return this.#api.WebGL
+  }
+
+  static get WebGPU () {
+    invariant(this.#api !== null, 'CanvasKitApi not initialized. Call CanvasKitApi.ready() first.')
+    return this.#api.WebGPU
   }
 
   static invoke(name: string, ...args: any[]): any {

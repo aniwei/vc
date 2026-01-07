@@ -13,6 +13,10 @@ set -euo pipefail
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKIA_DIR="$(cd "${BASE_DIR}/../.." && pwd)"
 
+# Optional feature flags (0/1)
+CHEAP_WEBGL="${CHEAP_WEBGL:-0}"
+CHEAP_WEBGPU="${CHEAP_WEBGPU:-0}"
+
 # Existing Skia build output (provides libskia.a, libskcms.a, libwuffs.a)
 SKIA_BUILD_DIR="${SKIA_BUILD_DIR:-${SKIA_DIR}/out/canvaskit_wasm_cheap2}"
 
@@ -56,7 +60,10 @@ fi
   '-DSK_TRIVIAL_ABI=[[clang::trivial_abi]]' \
   -DSK_UNICODE_AVAILABLE \
   -DSK_UNICODE_ICU_IMPLEMENTATION \
-  "${BASE_DIR}/src/canvaskit_bindings.cpp" \
+  $([[ "${CHEAP_WEBGL}" == "1" ]] && echo -DCHEAP_WEBGL=1) \
+  $([[ "${CHEAP_WEBGPU}" == "1" ]] && echo -DCHEAP_WEBGPU=1) \
+  $([[ "${CHEAP_WEBGPU}" == "1" ]] && echo -sUSE_WEBGPU=1) \
+  "${BASE_DIR}/src/canvaskit_cheap_bindings.cpp" \
   "${CODEC_OBJS[@]}" \
   -I"${SKIA_DIR}" \
   -I"${SKIA_DIR}/include/core" \
@@ -82,7 +89,67 @@ fi
   -sSIDE_MODULE=0 \
   -sMALLOC=none \
   -sERROR_ON_UNDEFINED_SYMBOLS=0 \
-  -sEXPORTED_FUNCTIONS='["_malloc","_free","_SkPathFillType_Winding","_SkPathFillType_EvenOdd","_SkPathFillType_InverseWinding","_SkPathFillType_InverseEvenOdd","_SkPaintStyle_Fill","_SkPaintStyle_Stroke","_SkPaintStyle_StrokeAndFill","_SkFilterMode_Nearest","_SkFilterMode_Linear","_SkMipmapMode_None","_SkMipmapMode_Nearest","_SkMipmapMode_Linear","_SkClipOp_Difference","_SkClipOp_Intersect","_SkTextDirection_LTR","_SkTextDirection_RTL","_SkTextAlign_Left","_SkTextAlign_Right","_SkTextAlign_Center","_SkTextAlign_Justify","_SkTextAlign_Start","_SkTextAlign_End","_MakePaint","_DeletePaint","_Paint_setColor","_Paint_setAntiAlias","_Paint_setStyle","_Paint_setStrokeWidth","_Paint_setStrokeCap","_Paint_setStrokeJoin","_Paint_setAlphaf","_Paint_setBlendMode","_Paint_setShader","_Paint_setColorFilter","_MakePath","_DeletePath","_Path_setFillType","_Path_moveTo","_Path_lineTo","_Path_quadTo","_Path_cubicTo","_Path_close","_Path_reset","_Path_addRect","_Path_addCircle","_Path_addOval","_Path_addRRectXY","_Path_addPolygon","_Path_addArc","_Path_arcToOval","_Path_snapshot","_DeleteSkPath","_Path_transform","_Path_getBounds","_SkPath_getBounds","_MakeCanvasSurface","_MakeSWCanvasSurface","_DeleteSurface","_Surface_getCanvas","_Surface_flush","_Surface_width","_Surface_height","_Surface_makeImageSnapshot","_Surface_encodeToPNG","_Surface_readPixelsRGBA8888","_Canvas_clear","_Canvas_getSaveCount","_Canvas_drawRect","_Canvas_drawPath","_Canvas_drawSkPath","_Canvas_drawCircle","_Canvas_drawOval","_Canvas_drawLine","_Canvas_drawArc","_Canvas_drawPaint","_Canvas_drawImage","_Canvas_drawImageWithPaint","_Canvas_drawImageRect","_Canvas_drawImageRectWithPaint","_Canvas_drawTextBlob","_Canvas_drawParagraph","_Canvas_save","_Canvas_saveLayer","_Canvas_restore","_Canvas_restoreToCount","_Canvas_translate","_Canvas_scale","_Canvas_rotate","_Canvas_concat","_Canvas_setMatrix","_Canvas_clipRect","_DeleteImage","_Image_width","_Image_height","_Image_readPixelsRGBA8888","_Image_encodeToPNG","_MakeImageFromEncoded","_DeleteData","_Data_bytes","_Data_size","_DeleteShader","_MakeColorShader","_MakeLinearGradientShader","_DeleteColorFilter","_MakeBlendColorFilter","_MakeFont","_DeleteFont","_Font_setSize","_Font_setEdging","_MakeTypefaceFromData","_DeleteTypeface","_Font_setTypeface","_DeleteTextBlob","_MakeTextBlobFromText","_MakeParagraphFromText","_MakeParagraphFromTextWithEllipsis","_MakeParagraphBuilder","_MakeParagraphBuilderWithEllipsis","_ParagraphBuilder_pushStyle","_ParagraphBuilder_pop","_ParagraphBuilder_addText","_ParagraphBuilder_build","_DeleteParagraphBuilder","_Paragraph_layout","_Paragraph_getHeight","_Paragraph_getMaxWidth","_Paragraph_getMinIntrinsicWidth","_Paragraph_getMaxIntrinsicWidth","_Paragraph_getLongestLine","_DeleteParagraph"]' \
+  -sEXPORTED_FUNCTIONS="$(
+    exported=(
+      _malloc _free
+      _SkPathFillType_Winding _SkPathFillType_EvenOdd _SkPathFillType_InverseWinding _SkPathFillType_InverseEvenOdd
+      _SkPaintStyle_Fill _SkPaintStyle_Stroke _SkPaintStyle_StrokeAndFill
+      _SkFilterMode_Nearest _SkFilterMode_Linear
+      _SkMipmapMode_None _SkMipmapMode_Nearest _SkMipmapMode_Linear
+      _SkClipOp_Difference _SkClipOp_Intersect
+      _SkTextDirection_LTR _SkTextDirection_RTL
+      _SkTextAlign_Left _SkTextAlign_Right _SkTextAlign_Center _SkTextAlign_Justify _SkTextAlign_Start _SkTextAlign_End
+      _MakePaint _DeletePaint
+      _Paint_setColor _Paint_setAntiAlias _Paint_setStyle _Paint_setStrokeWidth _Paint_setStrokeCap _Paint_setStrokeJoin
+      _Paint_setAlphaf _Paint_setBlendMode _Paint_setShader _Paint_setColorFilter
+      _MakePath _DeletePath
+      _Path_setFillType _Path_moveTo _Path_lineTo _Path_quadTo _Path_cubicTo
+      _Path_close _Path_reset
+      _Path_addRect _Path_addCircle _Path_addOval _Path_addRRectXY _Path_addPolygon _Path_addArc _Path_arcToOval
+      _Path_snapshot _DeleteSkPath _Path_transform _Path_getBounds _SkPath_getBounds
+      _MakeCanvasSurface _MakeSWCanvasSurface _DeleteSurface
+      _Surface_getCanvas _Surface_flush _Surface_width _Surface_height _Surface_makeImageSnapshot _Surface_encodeToPNG _Surface_readPixelsRGBA8888
+      _Canvas_clear _Canvas_getSaveCount
+      _Canvas_drawRect _Canvas_drawPath _Canvas_drawSkPath _Canvas_drawCircle _Canvas_drawOval _Canvas_drawLine _Canvas_drawArc _Canvas_drawPaint
+      _Canvas_drawImage _Canvas_drawImageWithPaint _Canvas_drawImageRect _Canvas_drawImageRectWithPaint
+      _Canvas_drawTextBlob _Canvas_drawParagraph
+      _Canvas_save _Canvas_saveLayer _Canvas_restore _Canvas_restoreToCount
+      _Canvas_translate _Canvas_scale _Canvas_rotate _Canvas_concat _Canvas_setMatrix _Canvas_clipRect
+      _DeleteImage _Image_width _Image_height _Image_readPixelsRGBA8888 _Image_encodeToPNG _MakeImageFromEncoded
+      _DeleteData _Data_bytes _Data_size
+      _DeleteShader _MakeColorShader _MakeLinearGradientShader
+      _DeleteColorFilter _MakeBlendColorFilter
+      _MakeFont _DeleteFont _Font_setSize _Font_setEdging
+      _MakeTypefaceFromData _DeleteTypeface _Font_setTypeface
+      _DeleteTextBlob _MakeTextBlobFromText
+      _MakeParagraphFromText _MakeParagraphFromTextWithEllipsis
+      _MakeParagraphBuilder _MakeParagraphBuilderWithEllipsis
+      _ParagraphBuilder_pushStyle _ParagraphBuilder_pop _ParagraphBuilder_addText _ParagraphBuilder_build _DeleteParagraphBuilder
+      _Paragraph_layout _Paragraph_getHeight _Paragraph_getMaxWidth _Paragraph_getMinIntrinsicWidth _Paragraph_getMaxIntrinsicWidth _Paragraph_getLongestLine
+      _DeleteParagraph
+    )
+
+    if [[ "${CHEAP_WEBGL}" == "1" ]]; then
+      exported+=(
+        _WebGL_CreateContext _WebGL_MakeContextCurrent _WebGL_DestroyContext
+        _MakeOnScreenCanvasSurface
+      )
+    fi
+
+    if [[ "${CHEAP_WEBGPU}" == "1" ]]; then
+      exported+=(
+        _MakeGPUTextureSurface
+      )
+    fi
+
+    {
+      printf "[";
+      for s in "${exported[@]}"; do
+        printf "'%s'," "${s}";
+      done
+      printf "]";
+    } | sed -e "s/,]$/]/";
+  )" \
   --no-entry \
   -o "${OUT_DIR}/canvaskit.wasm"
 
