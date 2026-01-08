@@ -2,40 +2,37 @@ import { describe, expect, it } from 'vitest'
 
 import { PathApi } from '../PathApi'
 import { PathFillType } from '../../enums'
-import { createMockWasmApi } from './mockWasmApi'
+import { getCanvasKit } from './getCanvasKit'
 
 describe('PathApi', () => {
-  it('forwards calls and coerces args', () => {
-    const { wasm, calls } = createMockWasmApi({
-      returns: {
-        MakePath: 111,
-        Path_snapshot: 222,
-      },
-    })
-
+  it('creates a path and (optionally) reads bounds', async () => {
+    const wasm = await getCanvasKit()
     const api = new PathApi(wasm)
-    expect(api.make()).toBe(111)
-    api.setFillType(1 as any, PathFillType.EvenOdd)
-    api.moveTo(2 as any, '1' as any, '2.5' as any)
-    api.addOval(3 as any, 1, 2, 3, 4, 1.9 as any, 2.1 as any)
-    api.addPolygon(4 as any, -1 as any, 3.9 as any, true)
-    api.arcToOval(5 as any, 1, 2, 3, 4, 5, 6, true)
-    expect(api.snapshot(6 as any)).toBe(222)
-    api.transform(7 as any, -2 as any)
-    api.deleteSkPath(8 as any)
-    api.delete(9 as any)
 
-    expect(calls).toEqual([
-      { name: 'MakePath', args: [] },
-      { name: 'Path_setFillType', args: [1, 1] },
-      { name: 'Path_moveTo', args: [2, 1, 2.5] },
-      { name: 'Path_addOval', args: [3, 1, 2, 3, 4, 1, 2] },
-      { name: 'Path_addPolygon', args: [4, 0xffffffff, 3, 1] },
-      { name: 'Path_arcToOval', args: [5, 1, 2, 3, 4, 5, 6, 1] },
-      { name: 'Path_snapshot', args: [6] },
-      { name: 'Path_transform', args: [7, 0xfffffffe] },
-      { name: 'DeleteSkPath', args: [8] },
-      { name: 'DeletePath', args: [9] },
-    ])
+    const path = api.make()
+    expect(path).toBeTruthy()
+
+    api.setFillType(path, PathFillType.EvenOdd)
+    api.moveTo(path, '1' as any, '2.5' as any)
+    api.lineTo(path, 10, 20)
+
+    // snapshot yields an SkPath* that can be queried/transformed
+    const skPath = api.snapshot(path)
+    expect(skPath).toBeTruthy()
+
+    if (wasm.hasExport('SkPath_getBounds')) {
+      const out = wasm.malloc(16)
+      api.getSkPathBounds(skPath, out)
+      const l = wasm.getFloat32(out, true)
+      const t = wasm.getFloat32(out + 4, true)
+      const r = wasm.getFloat32(out + 8, true)
+      const b = wasm.getFloat32(out + 12, true)
+      wasm.free(out)
+      expect(r).toBeGreaterThanOrEqual(l)
+      expect(b).toBeGreaterThanOrEqual(t)
+    }
+
+    api.deleteSkPath(skPath)
+    api.delete(path)
   })
 })

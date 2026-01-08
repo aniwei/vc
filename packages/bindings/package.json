@@ -6,9 +6,11 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "gen:canvaskitapi": "tsx scripts/getEnums.ts",
+    "wasm:build": "tsx scripts/buildCheapWasm.ts",
     "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && pnpm run gen:canvaskitapi && tsc -p tsconfig.json",
     "smoke": "pnpm run build && node dist/smoke.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:gpu": "RUN_BROWSER_GPU_TESTS=1 vitest run src/__tests__/gpu"
   },
   "exports": {
     ".": {
@@ -30,6 +32,8 @@
     "@types/node": "^20.19.27",
     "invariant": "^2.2.4",
     "vitest": "^0.28.3",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vite": "^5.4.0",
+    "puppeteer": "^22.15.0"
   }
 }

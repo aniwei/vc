@@ -32,7 +32,7 @@ export type CanvasKit = WasmApi & {
   WebGPU: WebGPUApi
 }
 
-async function makeWasmApi(input: string): Promise<CanvasKit> {
+async function createWasmApi(input: string): Promise<CanvasKit> {
   const wasmApi = new WasmApi()
   await wasmApi.run(input, {}, 0)
 
@@ -66,7 +66,7 @@ async function ready(options: CanvasKitOptions): Promise<CanvasKit> {
     throw new Error('Expected options.uri, options.path, or options.wasmPath')
   }
 
-  return await makeWasmApi(input)
+  return await createWasmApi(input)
 }
 
 export class CanvasKitApi {

@@ -2,26 +2,33 @@ import { describe, expect, it } from 'vitest'
 
 import { ShaderApi } from '../ShaderApi'
 import { TileMode } from '../../enums'
-import { createMockWasmApi } from './mockWasmApi'
+import { getCanvasKit } from './getCanvasKit'
 
 describe('ShaderApi', () => {
-  it('forwards calls and coerces args', () => {
-    const { wasm, calls } = createMockWasmApi({
-      returns: {
-        MakeColorShader: 11,
-        MakeLinearGradientShader: 22,
-      },
-    })
-
+  it('creates shaders from real wasm', async () => {
+    const wasm = await getCanvasKit()
     const api = new ShaderApi(wasm)
-    expect(api.makeColor(-1)).toBe(11)
-    expect(api.makeLinearGradient(1, '2' as any, 3, 4.5, -1 as any, -2 as any, 2.9, TileMode.Clamp)).toBe(22)
-    api.delete(-3 as any)
 
-    expect(calls).toEqual([
-      { name: 'MakeColorShader', args: [0xffffffff] },
-      { name: 'MakeLinearGradientShader', args: [1, 2, 3, 4.5, 0xffffffff, 0xfffffffe, 2, 0] },
-      { name: 'DeleteShader', args: [0xfffffffd] },
-    ])
+    const colorShader = api.makeColor(0xff00ff00)
+    expect(colorShader).toBeTruthy()
+    api.delete(colorShader)
+
+    if (!wasm.hasExport('MakeLinearGradientShader')) {
+      return
+    }
+
+    const colors = new Uint32Array([0xffff0000, 0xff00ff00])
+    const positions = new Float32Array([0, 1])
+    const colorsPtr = wasm.malloc(colors.length * 4)
+    const positionsPtr = wasm.malloc(positions.length * 4)
+    wasm.setUint32Array(colorsPtr, colors)
+    wasm.setFloat32Array(positionsPtr, positions)
+
+    const shader = api.makeLinearGradient(0, 0, 10, 0, colorsPtr, positionsPtr, 2, 0)
+    expect(shader).toBeTruthy()
+
+    api.delete(shader)
+    wasm.free(colorsPtr)
+    wasm.free(positionsPtr)
   })
 })

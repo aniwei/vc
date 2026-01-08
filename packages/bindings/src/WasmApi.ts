@@ -388,10 +388,58 @@ export class WasmApi {
     const wasmBytes = await this.load(input)
     const wasmSource = new Uint8Array(wasmBytes)
 
-    const cheap = await import('@libmedia/cheap')
-    const internal = await import('@libmedia/cheap/internal')
+    // In Node-like environments (including Vitest), prefer Node's resolver so we
+    // don't accidentally load browser entrypoints via bundler resolution.
+    let cheap: any
+    let internal: any
+    if (isNodeLike()) {
+      const { createRequire } = await import('node:module')
+      const require = createRequire(import.meta.url)
+      cheap = require('@libmedia/cheap')
+      internal = require('@libmedia/cheap/internal')
+    }
+    else {
+      cheap = await import('@libmedia/cheap')
+      internal = await import('@libmedia/cheap/internal')
+    }
 
     const resource = await cheap.compileResource({ source: wasmSource })
+
+    // Vitest executes tests in worker_threads by default (isMainThread=false).
+    // In that case cheap skips auto-init and expects the caller to initialize.
+    // `initThread()` requires an external stackPointer (normally provided by a parent),
+    // so for our single-threaded Node/Vitest usage we explicitly call `initMain()`.
+    if (isNodeLike() && !internal.Allocator) {
+      try {
+        const { createRequire } = await import('node:module')
+        const require = createRequire(import.meta.url)
+        const path = require('node:path') as typeof import('node:path')
+        const cheapEntry = require.resolve('@libmedia/cheap')
+        const heapPath = path.resolve(path.dirname(cheapEntry), 'heap.cjs')
+        const heap = require(heapPath)
+        if (typeof heap.initMain === 'function') {
+          heap.initMain()
+        }
+      }
+      catch {
+        // ignore; we'll throw a clearer error below if Allocator is still null
+      }
+    }
+
+    if (!internal.Allocator) {
+      let isMainThread: boolean | undefined
+      try {
+        isMainThread = (await import('node:worker_threads')).isMainThread
+      }
+      catch {
+        // ignore
+      }
+      throw new Error(
+        `@libmedia/cheap heap not initialized (Allocator=null). ` +
+          `isNodeLike=${isNodeLike()} isMainThread=${String(isMainThread)} cheap.isMainThread=${String(cheap?.isMainThread)}`
+      )
+    }
+
     const runner = new cheap.WebAssemblyRunner(resource, { imports: opts.imports ?? {} })
 
     this.attach(runner)

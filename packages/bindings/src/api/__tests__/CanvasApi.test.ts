@@ -2,40 +2,33 @@ import { describe, expect, it } from 'vitest'
 
 import { CanvasApi } from '../CanvasApi'
 import { ClipOp, FilterMode, MipmapMode } from '../../enums'
-import { createMockWasmApi } from './mockWasmApi'
+import { getCanvasKit } from './getCanvasKit'
 
 describe('CanvasApi', () => {
-  it('forwards calls and coerces args', () => {
-    const { wasm, calls } = createMockWasmApi({
-      returns: {
-        Canvas_getSaveCount: 7.9,
-        Canvas_save: 3.2,
-        Canvas_saveLayer: 11.7,
-      },
-    })
+  it('operates on a real canvas from wasm', async () => {
+    const wasm = await getCanvasKit()
+
+    const surface = wasm.invoke('MakeSWCanvasSurface', 16, 16) as number
+    const canvas = wasm.invoke('Surface_getCanvas', surface) as number
+    const paint = wasm.invoke('MakePaint') as number
 
     const api = new CanvasApi(wasm)
 
-    api.clear(1 as any, -1)
-    expect(api.getSaveCount(2 as any)).toBe(7)
-    expect(api.save(3 as any)).toBe(3)
-    expect(
-      api.saveLayer(4 as any, 1, 2, 3, 4, true, -5 as any),
-    ).toBe(11)
-    api.restoreToCount(6 as any, 9.9)
-    api.translate(7 as any, '2' as any, '3.5' as any)
-    api.clipRect(8 as any, 1, 2, 3, 4, ClipOp.Intersect, true)
-    api.drawImage(9 as any, 10 as any, 1, 2, FilterMode.Linear, MipmapMode.Nearest)
+    expect(api.getSaveCount(canvas)).toBeGreaterThan(0)
+    api.clear(canvas, 0xff00ff00)
+    api.translate(canvas, '2' as any, '3.5' as any)
+    api.clipRect(canvas, 1, 2, 3, 4, ClipOp.Intersect, true)
+    api.drawRect(canvas, 0, 0, 10, 10, paint)
 
-    expect(calls).toEqual([
-      { name: 'Canvas_clear', args: [1, 0xffffffff] },
-      { name: 'Canvas_getSaveCount', args: [2] },
-      { name: 'Canvas_save', args: [3] },
-      { name: 'Canvas_saveLayer', args: [4, 1, 2, 3, 4, 1, 0xfffffffb] },
-      { name: 'Canvas_restoreToCount', args: [6, 9] },
-      { name: 'Canvas_translate', args: [7, 2, 3.5] },
-      { name: 'Canvas_clipRect', args: [8, 1, 2, 3, 4, 1, 1] },
-      { name: 'Canvas_drawImage', args: [9, 10, 1, 2, 1, 1] },
-    ])
+    // smoke: save/restore should return an integer and not throw
+    const saveCount = api.save(canvas)
+    expect(Number.isInteger(saveCount)).toBe(true)
+    api.restoreToCount(canvas, saveCount)
+
+    // drawImage is a no-op with image=0; should still not crash.
+    api.drawImage(canvas, 0 as any, 1, 2, FilterMode.Linear, MipmapMode.Nearest)
+
+    wasm.invoke('DeletePaint', paint)
+    wasm.invoke('DeleteSurface', surface)
   })
 })

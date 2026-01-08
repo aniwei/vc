@@ -89,7 +89,7 @@ class PathPtr extends Ptr {
 
   addRect(rect: Rect | [number, number, number, number]): void {
     invariant(!this.isDeleted(), 'PathPtr is deleted')
-    const [l, t, r, b] = rect instanceof Rect ? rect.toLTRB() : rect
+    const [l, t, r, b] = rect instanceof Rect ? rect.ltrb() : rect
     CanvasKitApi.Path.addRect(this.raw, l, t, r, b)
   }
 
@@ -100,7 +100,7 @@ class PathPtr extends Ptr {
 
   addOval(rect: Rect | [number, number, number, number], dir: number = 0, startIndex: number = 0): void {
     invariant(!this.isDeleted(), 'PathPtr is deleted')
-    const [l, t, r, b] = rect instanceof Rect ? rect.toLTRB() : rect
+    const [l, t, r, b] = rect instanceof Rect ? rect.ltrb() : rect
     CanvasKitApi.Path.addOval(this.raw, l, t, r, b, dir | 0, startIndex | 0)
   }
 
@@ -112,7 +112,7 @@ class PathPtr extends Ptr {
     startIndex: number = 0
   ): void {
     invariant(!this.isDeleted(), 'PathPtr is deleted')
-    const [l, t, r, b] = rect instanceof Rect ? rect.toLTRB() : rect
+    const [l, t, r, b] = rect instanceof Rect ? rect.ltrb() : rect
     CanvasKitApi.Path.addRRectXY(this.raw, l, t, r, b, rx, ry, dir | 0, startIndex | 0)
   }
 
@@ -133,7 +133,7 @@ class PathPtr extends Ptr {
 
   addArc(oval: Rect | [number, number, number, number], startAngleDeg: number, sweepAngleDeg: number): void {
     invariant(!this.isDeleted(), 'PathPtr is deleted')
-    const [l, t, r, b] = oval instanceof Rect ? oval.toLTRB() : oval
+    const [l, t, r, b] = oval instanceof Rect ? oval.ltrb() : oval
     CanvasKitApi.Path.addArc(this.raw, l, t, r, b, startAngleDeg, sweepAngleDeg)
   }
 
@@ -144,7 +144,7 @@ class PathPtr extends Ptr {
     forceMoveTo: boolean
   ): void {
     invariant(!this.isDeleted(), 'PathPtr is deleted')
-    const [l, t, r, b] = oval instanceof Rect ? oval.toLTRB() : oval
+    const [l, t, r, b] = oval instanceof Rect ? oval.ltrb() : oval
     CanvasKitApi.Path.arcToOval(this.raw, l, t, r, b, startAngleDeg, sweepAngleDeg, forceMoveTo)
   }
 
